@@ -28,4 +28,4 @@ RUN mkdir -p staticfiles app/static/uploads
 EXPOSE 10000
 
 # Comando de inicio
-CMD gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 120 wsgi:app
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 3 --timeout 300 --graceful-timeout 60 wsgi:app
