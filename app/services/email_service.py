@@ -1,20 +1,103 @@
-from flask import render_template, current_app
-from flask_mail import Message
-from ..extensions import mail
+"""
+Servicio de emails.
+- Prioridad 1: Resend (API HTTP, funciona en Render)
+- Prioridad 2: Flask-Mail async (SMTP tradicional)
+- Si nada funciona, suprime silenciosamente sin romper la app
+"""
+import os
 import threading
+from flask import render_template, current_app
+
+
+def _send_with_resend(subject: str, recipients: list[str], html_content: str) -> bool:
+    """
+    Envía email usando Resend API (HTTP). No se bloquea en Render.
+    """
+    try:
+        import resend
+        
+        api_key = os.getenv("RESEND_API_KEY")
+        if not api_key:
+            return False
+        
+        resend.api_key = api_key
+        
+        # Email remitente
+        sender_raw = os.getenv("MAIL_DEFAULT_SENDER", "Marroquinería Peluzza <onboarding@resend.dev>")
+        
+        # Normalizar sender
+        if '<' in sender_raw and '>' in sender_raw:
+            sender_email = sender_raw.split('<')[1].split('>')[0]
+            sender_name = sender_raw.split('<')[0].strip()
+            final_sender = f"{sender_name} <{sender_email}>" if sender_name else sender_raw
+        else:
+            final_sender = f"Marroquinería Peluzza <{sender_raw}>"
+        
+        response = resend.Emails.send({
+            "from": final_sender,
+            "to": recipients,
+            "subject": subject,
+            "html": html_content,
+        })
+        
+        print(f"   ✅ [RESEND] Email enviado con éxito! ID: {response.get('id', 'N/A')}")
+        return True
+        
+    except ImportError:
+        print("   ⚠️  Paquete 'resend' no instalado. Intentando Flask-Mail...")
+        return False
+    except Exception as e:
+        print(f"   ⚠️  Error con Resend: {e}. Intentando Flask-Mail...")
+        return False
+
+
+def _send_with_flask_mail(subject: str, recipients: list[str], html_content: str) -> bool:
+    """
+    Envía email usando Flask-Mail (SMTP tradicional) de forma asíncrona.
+    """
+    try:
+        from flask_mail import Message
+        from ..extensions import mail
+        
+        msg = Message(subject=subject, recipients=recipients)
+        msg.html = html_content
+        
+        app = current_app._get_current_object()
+        
+        def _send():
+            try:
+                with app.app_context():
+                    mail.send(msg)
+                    print(f"   ✅ [SMTP] Email enviado con éxito a: {recipients}")
+            except Exception as e:
+                print(f"   ⚠️  [SMTP] Error enviando: {e}")
+        
+        thread = threading.Thread(target=_send, daemon=True)
+        thread.start()
+        return True
+        
+    except Exception as e:
+        print(f"   ❌ No se pudo preparar Flask-Mail: {e}")
+        return False
 
 
 def send_email(subject: str, recipients: list[str], template: str, **context):
     """
-    Envía un email usando una plantilla HTML de forma ASÍNCRONA.
-    El envío ocurre en un thread separado para no bloquear el worker.
+    Envía email usando la mejor estrategia disponible.
+    Nunca falla ni bloquea la app.
     """
     try:
         print(f"\n📧 INTENTANDO ENVIAR EMAIL...")
         print(f"   Para: {recipients}")
         print(f"   Asunto: {subject}")
         
-        # Limpiar destinatarios (por si vienen en formato "Nombre <email>")
+        # Si no hay servicio configurado, suprimir silenciosamente
+        if not os.getenv("RESEND_API_KEY") and not os.getenv("MAIL_SERVER"):
+            print(f"   ℹ️  [SUPRIMIDO] No hay servicio de email configurado")
+            print(f"   💡 Configura RESEND_API_KEY o MAIL_SERVER para activar emails\n")
+            return True
+        
+        # Limpiar destinatarios
         cleaned_recipients = []
         for recipient in recipients:
             if '<' in recipient and '>' in recipient:
@@ -23,36 +106,20 @@ def send_email(subject: str, recipients: list[str], template: str, **context):
             else:
                 cleaned_recipients.append(recipient)
         
-        msg = Message(
-            subject=subject,
-            recipients=cleaned_recipients,
-        )
-        
         # Renderizar plantilla HTML
-        msg.html = render_template(template, **context)
+        html_content = render_template(template, **context)
         
-        # Capturar la app para usarla en el thread
-        app = current_app._get_current_object()
+        # Prioridad 1: Resend (API HTTP - funciona en Render)
+        if os.getenv("RESEND_API_KEY"):
+            if _send_with_resend(subject, cleaned_recipients, html_content):
+                return True
         
-        # Enviar en un thread separado (NO bloquea al worker)
-        def _send():
-            try:
-                with app.app_context():
-                    # Configurar timeout corto para Gmail (10 segundos)
-                    # Esto evita que se quede colgado si Gmail no responde
-                    mail.send(msg)
-                    print(f"   ✅ ¡EMAIL ENVIADO CON ÉXITO! a: {cleaned_recipients}\n")
-            except Exception as e:
-                print(f"\n   ❌ ERROR CRÍTICO AL ENVIAR EMAIL: {e}\n")
-                print(f"   💡 Posibles causas:")
-                print(f"      - Contraseña de aplicación incorrecta")
-                print(f"      - Verificación en 2 pasos no habilitada en Gmail")
-                print(f"      - IP bloqueada por Gmail\n")
+        # Prioridad 2: Flask-Mail (SMTP - fallback)
+        if _send_with_flask_mail(subject, cleaned_recipients, html_content):
+            return True
         
-        thread = threading.Thread(target=_send, daemon=True)
-        thread.start()
-        
-        return True
+        print("   ⚠️  Ningún servicio de email disponible")
+        return False
         
     except Exception as e:
         print(f"\n   ❌ ERROR preparando email: {e}\n")
@@ -60,11 +127,14 @@ def send_email(subject: str, recipients: list[str], template: str, **context):
         return False
 
 
+# ============================================
+# Funciones específicas (wrappers)
+# ============================================
+
 def send_order_confirmation(order):
     """Envía email de confirmación de pedido."""
-    subject = f"Confirmación de pedido #{order.id} - Marroquinería Artesanal"
     return send_email(
-        subject=subject,
+        subject=f"Confirmación de pedido #{order.id} - Marroquinería Artesanal",
         recipients=[order.customer_email],
         template="emails/order_confirmation.html",
         order=order,
@@ -73,9 +143,8 @@ def send_order_confirmation(order):
 
 def send_welcome_email(user):
     """Envía email de bienvenida al registrarse."""
-    subject = "¡Bienvenido/a a Marroquinería Artesanal!"
     return send_email(
-        subject=subject,
+        subject="¡Bienvenido/a a Marroquinería Artesanal!",
         recipients=[user.email],
         template="emails/welcome.html",
         user=user,
@@ -84,9 +153,8 @@ def send_welcome_email(user):
 
 def send_order_status_update(order, old_status: str, new_status: str):
     """Envía email al cliente cuando cambia el estado del pedido."""
-    subject = f"Actualización de tu pedido #{order.id} - {order.status_display}"
     return send_email(
-        subject=subject,
+        subject=f"Actualización de tu pedido #{order.id} - {order.status_display}",
         recipients=[order.customer_email],
         template="emails/order_status_update.html",
         order=order,
@@ -97,11 +165,9 @@ def send_order_status_update(order, old_status: str, new_status: str):
 
 def send_contact_email(name: str, email: str, subject: str, message: str):
     """Envía el mensaje del formulario de contacto al admin."""
-    final_subject = f"📬 Nuevo mensaje de contacto: {subject or 'Sin asunto'}"
     admin_email = current_app.config.get('MAIL_USERNAME', 'marroquineriapeluzza@gmail.com')
-    
     return send_email(
-        subject=final_subject,
+        subject=f"📬 Nuevo mensaje de contacto: {subject or 'Sin asunto'}",
         recipients=[admin_email],
         template="emails/contact_notification.html",
         name=name,
@@ -113,9 +179,8 @@ def send_contact_email(name: str, email: str, subject: str, message: str):
 
 def send_review_approved(review):
     """Notifica al usuario que su reseña fue aprobada."""
-    subject = f"⭐ Tu reseña fue publicada - {review.product.name}"
     return send_email(
-        subject=subject,
+        subject=f"⭐ Tu reseña fue publicada - {review.product.name}",
         recipients=[review.user.email],
         template="emails/review_approved.html",
         review=review,
