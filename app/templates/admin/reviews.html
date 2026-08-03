@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Moderación de Reseñas | Panel Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+  
+  <!-- Header -->
+  <div class="mb-8">
+    <a href="/admin" class="text-craft-600 hover:underline text-sm">← Volver al Panel</a>
+    <h1 class="font-display text-4xl font-bold text-leather-900 mt-2">⭐ Moderación de Reseñas</h1>
+    <p class="text-leather-700 mt-2">Revisa y aprueba las reseñas de los clientes</p>
+  </div>
+
+  <!-- Contadores -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <a href="/admin/reseñas?status=pending" 
+       class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition {% if current_status == 'pending' %}ring-2 ring-yellow-500{% endif %}">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500 mb-1">Pendientes</p>
+          <p class="text-3xl font-bold text-yellow-600">{{ stats.pending }}</p>
+        </div>
+        <div class="text-4xl">⏳</div>
+      </div>
+    </a>
+
+    <a href="/admin/reseñas?status=approved" 
+       class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition {% if current_status == 'approved' %}ring-2 ring-green-500{% endif %}">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500 mb-1">Aprobadas</p>
+          <p class="text-3xl font-bold text-green-600">{{ stats.approved }}</p>
+        </div>
+        <div class="text-4xl">✅</div>
+      </div>
+    </a>
+
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="text-sm text-gray-500 mb-1">Total</p>
+          <p class="text-3xl font-bold text-leather-900">{{ stats.total }}</p>
+        </div>
+        <div class="text-4xl">⭐</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lista de reseñas -->
+  <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    
+    {% if reviews %}
+    <div class="divide-y divide-gray-100">
+      {% for review in reviews %}
+      <div class="p-6 hover:bg-gray-50 transition">
+        <div class="flex items-start justify-between gap-4">
+          
+          <!-- Info de la reseña -->
+          <div class="flex-1">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-10 h-10 bg-leather-100 rounded-full flex items-center justify-center font-bold text-leather-900">
+                {{ review.user.first_name[0] }}{{ review.user.last_name[0] }}
+              </div>
+              <div>
+                <p class="font-semibold text-leather-900">{{ review.user.first_name }} {{ review.user.last_name[0] }}.</p>
+                <p class="text-xs text-gray-500">{{ review.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+              </div>
+            </div>
+
+            <!-- Estrellas -->
+            <div class="flex items-center gap-1 mb-2">
+              {% for i in range(1, 6) %}
+                {% if i <= review.rating %}
+                  <svg class="w-5 h-5 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                {% else %}
+                  <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                {% endif %}
+              {% endfor %}
+            </div>
+
+            <!-- Producto -->
+            <p class="text-sm text-leather-700 mb-2">
+              <span class="font-semibold">Producto:</span> 
+              <a href="/tienda/producto/{{ review.product.slug }}" target="_blank" class="text-craft-600 hover:underline">
+                {{ review.product.name }}
+              </a>
+            </p>
+
+            <!-- Comentario -->
+            {% if review.comment %}
+            <div class="bg-leather-50 rounded-lg p-4 mt-3">
+              <p class="text-leather-900 italic">"{{ review.comment }}"</p>
+            </div>
+            {% else %}
+            <p class="text-sm text-gray-500 italic mt-2">Sin comentario</p>
+            {% endif %}
+          </div>
+
+          <!-- Acciones -->
+          <div class="flex flex-col gap-2 flex-shrink-0">
+            {% if not review.approved %}
+              <form method="POST" action="/admin/reseñas/{{ review.id }}/aprobar?status={{ current_status }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit" 
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-500 transition flex items-center gap-2">
+                  ✅ Aprobar
+                </button>
+              </form>
+            {% else %}
+              <span class="bg-green-100 text-green-800 px-4 py-2 rounded-lg text-sm font-semibold text-center">
+                ✅ Aprobada
+              </span>
+            {% endif %}
+
+            <form method="POST" 
+                  action="/admin/reseñas/{{ review.id }}/rechazar?status={{ current_status }}"
+                  onsubmit="return confirm('¿Rechazar y eliminar esta reseña?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <button type="submit" 
+                      class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-500 transition flex items-center gap-2">
+                ❌ Rechazar
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="p-12 text-center">
+      <p class="text-6xl mb-4">
+        {% if current_status == 'pending' %}🎉{% else %}📝{% endif %}
+      </p>
+      <h3 class="font-display text-xl font-bold text-leather-900 mb-2">
+        {% if current_status == 'pending' %}
+          ¡No hay reseñas pendientes!
+        {% else %}
+          No hay reseñas aprobadas aún
+        {% endif %}
+      </h3>
+      <p class="text-leather-700">
+        {% if current_status == 'pending' %}
+          Todas las reseñas han sido revisadas
+        {% else %}
+          Las reseñas aparecerán aquí cuando sean aprobadas
+        {% endif %}
+      </p>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

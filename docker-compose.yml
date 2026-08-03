@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql+psycopg://postgres:postgres@db:5432/marroquineria
+      - SECRET_KEY=${SECRET_KEY}
+      - MAIL_SERVER=${MAIL_SERVER}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USE_TLS=${MAIL_USE_TLS}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER}
+    depends_on:
+      - db
+    volumes:
+      - ./app/static/uploads:/app/app/static/uploads
+    command: >
+      sh -c "python init_db.py &&
+             gunicorn --bind 0.0.0.0:8000 --workers 3 --timeout 120 wsgi:app"
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=marroquineria
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:

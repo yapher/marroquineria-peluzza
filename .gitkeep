@@ -1,0 +1,2 @@
+cd C:\marroquineria
+New-Item -ItemType File -Path "app\static\uploads\.gitkeep" -Force

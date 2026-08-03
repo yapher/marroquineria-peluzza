@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Pedidos | Panel Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="font-display text-4xl font-bold text-leather-900">Pedidos</h1>
+    <p class="text-leather-700 mt-2">Gestiona y actualiza el estado de los pedidos</p>
+  </div>
+
+  <!-- Estadísticas rápidas -->
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-8">
+    <a href="/admin/pedidos" class="bg-white rounded-lg p-3 text-center hover:shadow-md transition {% if current_status == 'all' %}ring-2 ring-craft-600{% endif %}">
+      <p class="text-2xl font-bold text-leather-900">{{ stats.total }}</p>
+      <p class="text-xs text-leather-700">Total</p>
+    </a>
+    <a href="/admin/pedidos?status=pending_payment" class="bg-white rounded-lg p-3 text-center hover:shadow-md transition {% if current_status == 'pending_payment' %}ring-2 ring-yellow-500{% endif %}">
+      <p class="text-2xl font-bold text-yellow-600">{{ stats.pending_payment }}</p>
+      <p class="text-xs text-leather-700">💳 Pend. Pago</p>
+    </a>
+    <a href="/admin/pedidos?status=paid" class="bg-white rounded-lg p-3 text-center hover:shadow-md transition {% if current_status == 'paid' %}ring-2 ring-blue-500{% endif %}">
+      <p class="text-2xl font-bold text-blue-600">{{ stats.paid }}</p>
+      <p class="text-xs text-leather-700">✅ Pagados</p>
+    </a>
+    <a href="/admin/pedidos?status=preparing" class="bg-white rounded-lg p-3 text-center hover:shadow-md transition {% if current_status == 'preparing' %}ring-2 ring-purple-500{% endif %}">
+      <p class="text-2xl font-bold text-purple-600">{{ stats.preparing }}</p>
+      <p class="text-xs text-leather-700">📦 Preparando</p>
+    </a>
+    <a href="/admin/pedidos?status=shipped" class="bg-white rounded-lg p-3 text-center hover:shadow-md transition {% if current_status == 'shipped' %}ring-2 ring-indigo-500{% endif %}">
+      <p class="text-2xl font-bold text-indigo-600">{{ stats.shipped }}</p>
+      <p class="text-xs text-leather-700">🚚 Enviados</p>
+    </a>
+    <a href="/admin/pedidos?status=delivered" class="bg-white rounded-lg p-3 text-center hover:shadow-md transition {% if current_status == 'delivered' %}ring-2 ring-green-500{% endif %}">
+      <p class="text-2xl font-bold text-green-600">{{ stats.delivered }}</p>
+      <p class="text-xs text-leather-700">🏠 Entregados</p>
+    </a>
+    <a href="/admin/pedidos?status=completed" class="bg-white rounded-lg p-3 text-center hover:shadow-md transition {% if current_status == 'completed' %}ring-2 ring-green-700{% endif %}">
+      <p class="text-2xl font-bold text-green-800">{{ stats.completed }}</p>
+      <p class="text-xs text-leather-700">🎉 Completados</p>
+    </a>
+    <a href="/admin/pedidos?status=cancelled" class="bg-white rounded-lg p-3 text-center hover:shadow-md transition {% if current_status == 'cancelled' %}ring-2 ring-red-500{% endif %}">
+      <p class="text-2xl font-bold text-red-600">{{ stats.cancelled }}</p>
+      <p class="text-xs text-leather-700">❌ Cancelados</p>
+    </a>
+  </div>
+
+  <!-- Tabla de pedidos -->
+  <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Pedido</th>
+          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Cliente</th>
+          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Fecha</th>
+          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Total</th>
+          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Estado</th>
+          <th class="text-right py-4 px-4 text-sm font-semibold text-leather-900">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in orders %}
+        <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+          <td class="py-4 px-4">
+            <p class="font-bold text-leather-900">#{{ order.id }}</p>
+            <p class="text-xs text-gray-500">{{ order.items|length }} producto{{ 's' if order.items|length != 1 }}</p>
+          </td>
+          <td class="py-4 px-4">
+            <p class="font-semibold text-leather-900 text-sm">{{ order.customer_name }}</p>
+            <p class="text-xs text-gray-500">{{ order.customer_email }}</p>
+          </td>
+          <td class="py-4 px-4 text-sm text-leather-700">
+            {{ order.created_at.strftime('%d/%m/%Y') }}
+          </td>
+          <td class="py-4 px-4 text-sm font-bold text-leather-900">
+            ${{ "%.2f"|format(order.total) }}
+          </td>
+          <td class="py-4 px-4">
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold
+              {% if order.status_color == 'yellow' %}bg-yellow-100 text-yellow-800
+              {% elif order.status_color == 'blue' %}bg-blue-100 text-blue-800
+              {% elif order.status_color == 'purple' %}bg-purple-100 text-purple-800
+              {% elif order.status_color == 'indigo' %}bg-indigo-100 text-indigo-800
+              {% elif order.status_color == 'green' %}bg-green-100 text-green-800
+              {% elif order.status_color == 'red' %}bg-red-100 text-red-800
+              {% else %}bg-gray-100 text-gray-800{% endif %}">
+              {{ order.status_icon }} {{ order.status_display }}
+            </span>
+          </td>
+          <td class="py-4 px-4 text-right">
+            <a href="/admin/pedidos/{{ order.id }}" class="text-craft-600 hover:underline text-sm font-semibold">
+              Ver detalle →
+            </a>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="py-12 text-center text-gray-500">
+            No hay pedidos en esta categoría
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

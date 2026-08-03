@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmación de Pedido</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background-color: #fdf8f3;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .header {
+      background-color: #3d1d08;
+      color: #ffffff;
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .header p {
+      margin: 10px 0 0;
+      opacity: 0.9;
+      font-size: 16px;
+    }
+    .content {
+      padding: 40px 30px;
+    }
+    .success-badge {
+      display: inline-block;
+      background-color: #10b981;
+      color: white;
+      padding: 8px 20px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .order-info {
+      background-color: #fdf8f3;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .order-info h2 {
+      margin: 0 0 15px;
+      color: #3d1d08;
+      font-size: 20px;
+    }
+    .order-info p {
+      margin: 5px 0;
+      color: #6b3410;
+      font-size: 14px;
+    }
+    .product-list {
+      margin: 20px 0;
+    }
+    .product-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #f3e8d8;
+    }
+    .product-item:last-child {
+      border-bottom: none;
+    }
+    .product-name {
+      font-weight: 600;
+      color: #3d1d08;
+      margin: 0;
+    }
+    .product-details {
+      font-size: 13px;
+      color: #6b3410;
+      margin: 4px 0 0;
+    }
+    .product-price {
+      font-weight: 700;
+      color: #9a5f28;
+      font-size: 16px;
+    }
+    .total-section {
+      background-color: #3d1d08;
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      margin-top: 20px;
+    }
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+      font-size: 14px;
+    }
+    .total-row.final {
+      border-top: 1px solid rgba(255,255,255,0.2);
+      padding-top: 12px;
+      margin-top: 12px;
+      font-size: 20px;
+      font-weight: 700;
+    }
+    .shipping-info {
+      background-color: #f9ebd9;
+      padding: 20px;
+      border-radius: 8px;
+      margin: 20px 0;
+    }
+    .shipping-info h3 {
+      margin: 0 0 10px;
+      color: #3d1d08;
+      font-size: 16px;
+    }
+    .shipping-info p {
+      margin: 4px 0;
+      color: #6b3410;
+      font-size: 14px;
+    }
+    .footer {
+      background-color: #f9ebd9;
+      padding: 30px;
+      text-align: center;
+      color: #6b3410;
+      font-size: 13px;
+    }
+    .footer a {
+      color: #9a5f28;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .button {
+      display: inline-block;
+      background-color: #9a5f28;
+      color: white !important;
+      padding: 12px 30px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- Header -->
+    <div class="header">
+      <h1>👜 Marroquinería Artesanal</h1>
+      <p>¡Gracias por tu compra!</p>
+    </div>
+
+    <!-- Content -->
+    <div class="content">
+      
+      <span class="success-badge">✓ Pedido confirmado</span>
+      
+      <p style="color: #3d1d08; font-size: 16px; line-height: 1.6;">
+        Hola <strong>{{ order.customer_name.split()[0] }}</strong>,<br>
+        Hemos recibido tu pedido y ya estamos preparándolo con mucho cuidado.
+      </p>
+
+      <!-- Info del pedido -->
+      <div class="order-info">
+        <h2>Detalles del pedido</h2>
+        <p><strong>Número de pedido:</strong> #{{ order.id }}</p>
+        <p><strong>Fecha:</strong> {{ order.created_at.strftime('%d/%m/%Y a las %H:%M') }}</p>
+        <p><strong>Estado:</strong> {{ order.status_display }}</p>
+      </div>
+
+      <!-- Productos -->
+      <div class="product-list">
+        <h3 style="color: #3d1d08; margin-bottom: 10px;">Productos comprados</h3>
+        {% for item in order.items %}
+        <div class="product-item">
+          <div>
+            <p class="product-name">{{ item.product_name }}</p>
+            <p class="product-details">Cantidad: {{ item.quantity }} × ${{ "%.2f"|format(item.price) }}</p>
+          </div>
+          <p class="product-price">${{ "%.2f"|format(item.subtotal) }}</p>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Totales -->
+      <div class="total-section">
+        <div class="total-row">
+          <span>Subtotal</span>
+          <span>${{ "%.2f"|format(order.subtotal) }}</span>
+        </div>
+        <div class="total-row">
+          <span>Envío</span>
+          <span>${{ "%.2f"|format(order.shipping_cost) }}</span>
+        </div>
+        <div class="total-row final">
+          <span>Total</span>
+          <span>${{ "%.2f"|format(order.total) }}</span>
+        </div>
+      </div>
+
+      <!-- Dirección de envío -->
+      <div class="shipping-info">
+        <h3>📦 Dirección de envío</h3>
+        <p><strong>{{ order.customer_name }}</strong></p>
+        <p>{{ order.shipping_address }}</p>
+        <p>{{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_zip }}</p>
+        <p>{{ order.shipping_country }}</p>
+        {% if order.customer_phone %}
+        <p style="margin-top: 10px;">📞 {{ order.customer_phone }}</p>
+        {% endif %}
+      </div>
+
+      <p style="color: #6b3410; font-size: 14px; line-height: 1.6; text-align: center; margin-top: 30px;">
+        Te enviaremos otro email cuando tu pedido sea enviado.<br>
+        ¡Gracias por apoyar el trabajo artesanal! 🧵
+      </p>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p><strong>Marroquinería Artesanal</strong></p>
+      <p>Cuero genuino, hecho a mano por artesanos locales</p>
+      <p style="margin-top: 15px;">
+        ¿Preguntas? Contáctanos en <a href="mailto:contacto@marroquineria.com">contacto@marroquineria.com</a>
+      </p>
+      <p style="margin-top: 15px; font-size: 11px; opacity: 0.7;">
+        © 2026 Marroquinería Artesanal. Todos los derechos reservados.
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>

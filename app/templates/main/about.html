@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block title %}Nuestros Artesanos | Marroquinería Artesanal{% endblock %}
+{% block description %}Conoce la historia detrás de cada pieza de cuero hecha a mano{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-12">
+  
+  <!-- Hero -->
+  <div class="text-center mb-16">
+    <h1 class="font-display text-5xl font-bold text-leather-900 mb-4">Nuestra Historia</h1>
+    <p class="text-xl text-leather-700 max-w-3xl mx-auto leading-relaxed">
+      Desde hace más de una década, transformamos el mejor cuero argentino en piezas únicas que cuentan historias.
+    </p>
+  </div>
+
+  <!-- Historia -->
+  <div class="grid md:grid-cols-2 gap-12 items-center mb-20">
+    <div>
+      <h2 class="font-display text-3xl font-bold text-leather-900 mb-4">Tradición que se transmite</h2>
+      <p class="text-leather-700 mb-4 leading-relaxed">
+        Todo comenzó en un pequeño taller familiar, donde el aroma del cuero se mezclaba con las historias de los maestros artesanos. Hoy, seguimos honrando esa tradición con cada puntada.
+      </p>
+      <p class="text-leather-700 mb-4 leading-relaxed">
+        Trabajamos con cuero de primera calidad, seleccionado cuidadosamente de curtiembres locales que comparten nuestra pasión por la excelencia y la sustentabilidad.
+      </p>
+      <p class="text-leather-700 leading-relaxed">
+        Cada billetera, cada bolso y cada cinturón que ves en nuestra tienda es el resultado de horas de trabajo manual, atención al detalle y un profundo respeto por el oficio.
+      </p>
+    </div>
+    <div class="bg-leather-100 rounded-2xl h-96 flex items-center justify-center text-9xl">
+      🧵
+    </div>
+  </div>
+
+  <!-- Valores -->
+  <div class="bg-white rounded-2xl shadow-sm p-10 mb-20">
+    <h2 class="font-display text-3xl font-bold text-leather-900 mb-8 text-center">Nuestros Valores</h2>
+    <div class="grid md:grid-cols-3 gap-8">
+      <div class="text-center">
+        <div class="text-5xl mb-4">✨</div>
+        <h3 class="font-display text-xl font-bold text-leather-900 mb-2">Calidad Premium</h3>
+        <p class="text-leather-700 text-sm leading-relaxed">
+          Solo utilizamos cuero genuino de primera selección. Cada pieza es sometida a estrictos controles de calidad.
+        </p>
+      </div>
+      <div class="text-center">
+        <div class="text-5xl mb-4">🌱</div>
+        <h3 class="font-display text-xl font-bold text-leather-900 mb-2">Sustentabilidad</h3>
+        <p class="text-leather-700 text-sm leading-relaxed">
+          Trabajamos con procesos respetuosos del medio ambiente y apoyamos la economía local.
+        </p>
+      </div>
+      <div class="text-center">
+        <div class="text-5xl mb-4">❤️</div>
+        <h3 class="font-display text-xl font-bold text-leather-900 mb-2">Hecho con Pasión</h3>
+        <p class="text-leather-700 text-sm leading-relaxed">
+          Cada producto es elaborado a mano por artesanos que aman su oficio y cuidan cada detalle.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Artesanos -->
+  <div class="mb-20">
+    <h2 class="font-display text-3xl font-bold text-leather-900 mb-8 text-center">Conoce a Nuestros Artesanos</h2>
+    <div class="grid md:grid-cols-3 gap-8">
+      
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition">
+        <div class="h-48 bg-leather-100 flex items-center justify-center text-7xl">👨‍🎨</div>
+        <div class="p-6">
+          <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Don Manuel</h3>
+          <p class="text-craft-600 text-sm font-semibold mb-3">Maestro Artesano · 40 años de experiencia</p>
+          <p class="text-leather-700 text-sm">Especialista en billeteras y carteras clásicas. Su firma es garantía de perfección.</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition">
+        <div class="h-48 bg-leather-100 flex items-center justify-center text-7xl">👩‍🎨</div>
+        <div class="p-6">
+          <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Doña Rosa</h3>
+          <p class="text-craft-600 text-sm font-semibold mb-3">Artesana · 25 años de experiencia</p>
+          <p class="text-leather-700 text-sm">Experta en bolsos y mochilas. Sus diseños combinan tradición con un toque moderno.</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition">
+        <div class="h-48 bg-leather-100 flex items-center justify-center text-7xl">👨‍🎨</div>
+        <div class="p-6">
+          <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Jorge</h3>
+          <p class="text-craft-600 text-sm font-semibold mb-3">Artesano · 15 años de experiencia</p>
+          <p class="text-leather-700 text-sm">Maestro en cinturones y accesorios. Su trabajo es reconocido por la precisión de sus acabados.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="bg-leather-900 rounded-2xl p-12 text-center">
+    <h2 class="font-display text-3xl font-bold text-white mb-4">¿Listo para conocer nuestras piezas?</h2>
+    <p class="text-leather-100 mb-8 max-w-2xl mx-auto">
+      Cada producto que ofrecemos es una obra de arte única, hecha con dedicación por manos expertas.
+    </p>
+    <a href="/tienda" class="inline-block bg-craft-600 text-white px-8 py-4 rounded-lg font-semibold hover:bg-craft-500 transition text-lg">
+      Explorar la Colección →
+    </a>
+  </div>
+
+</div>
+{% endblock %}

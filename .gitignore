@@ -1,0 +1,45 @@
+# Entorno virtual
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+
+# Base de datos (NO subir a GitHub)
+dev.db
+*.sqlite
+*.sqlite3
+
+# Variables de entorno (NUNCA subir credenciales)
+.env
+.env.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+# Uploads (archivos subidos por usuarios)
+app/static/uploads/*
+!app/static/uploads/.gitkeep

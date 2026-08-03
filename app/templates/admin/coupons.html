@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Cupones | Panel Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="flex items-center justify-between mb-8">
+    <div>
+      <h1 class="font-display text-4xl font-bold text-leather-900">Cupones de Descuento</h1>
+      <p class="text-leather-700 mt-2">Gestiona códigos promocionales</p>
+    </div>
+    <a href="/admin/cupones/nuevo" class="bg-craft-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-craft-500 transition">
+      + Nuevo Cupón
+    </a>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Código</th>
+          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Descuento</th>
+          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Usos</th>
+          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Válido hasta</th>
+          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Estado</th>
+          <th class="text-right py-4 px-4 text-sm font-semibold text-leather-900">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for coupon in coupons %}
+        <tr class="border-b border-gray-100 hover:bg-gray-50">
+          <td class="py-4 px-4">
+            <code class="bg-leather-100 text-leather-900 px-3 py-1 rounded font-mono font-bold">{{ coupon.code }}</code>
+          </td>
+          <td class="py-4 px-4 text-sm font-semibold text-craft-600">{{ coupon.discount_display }}</td>
+          <td class="py-4 px-4 text-sm">
+            {{ coupon.uses_count }}
+            {% if coupon.max_uses > 0 %}
+              / {{ coupon.max_uses }}
+            {% else %}
+              <span class="text-gray-400">(ilimitado)</span>
+            {% endif %}
+          </td>
+          <td class="py-4 px-4 text-sm">
+            {% if coupon.valid_until %}
+              {{ coupon.valid_until.strftime('%d/%m/%Y') }}
+            {% else %}
+              <span class="text-gray-400">Sin límite</span>
+            {% endif %}
+          </td>
+          <td class="py-4 px-4 text-sm">
+            {% if coupon.is_valid %}
+              <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">Válido</span>
+            {% else %}
+              <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-semibold">Inválido</span>
+            {% endif %}
+          </td>
+          <td class="py-4 px-4 text-right">
+            <a href="/admin/cupones/{{ coupon.id }}/editar" class="text-craft-600 hover:underline text-sm mr-3">Editar</a>
+            <form method="POST" action="/admin/cupones/{{ coupon.id }}/eliminar" class="inline" onsubmit="return confirm('¿Eliminar este cupón?')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+              <button type="submit" class="text-red-600 hover:underline text-sm">Eliminar</button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="6" class="py-12 text-center text-gray-500">
+            No hay cupones aún. <a href="/admin/cupones/nuevo" class="text-craft-600 underline">Crea el primero</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

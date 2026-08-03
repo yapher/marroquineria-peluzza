@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Panel Admin | Marroquinería Artesanal{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <div class="mb-8">
+    <h1 class="font-display text-4xl font-bold text-leather-900">Panel de Administración</h1>
+    <p class="text-leather-700 mt-2">Bienvenido/a, {{ current_user.full_name }}</p>
+  </div>
+
+  <!-- Estadísticas -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <p class="text-sm text-leather-700 mb-1">Productos</p>
+      <p class="text-3xl font-bold text-leather-900">{{ stats.total_products }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <p class="text-sm text-leather-700 mb-1">Pedidos</p>
+      <p class="text-3xl font-bold text-leather-900">{{ stats.total_orders }}</p>
+    </div>
+        <a href="/admin/cupones" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+      <p class="text-2xl mb-2">🎁</p>
+      <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Cupones</h3>
+      <p class="text-sm text-leather-700">Códigos promocionales</p>
+    </a>
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <p class="text-sm text-leather-700 mb-1">Clientes</p>
+      <p class="text-3xl font-bold text-leather-900">{{ stats.total_customers }}</p>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm p-6">
+      <p class="text-sm text-leather-700 mb-1">Ingresos</p>
+      <p class="text-3xl font-bold text-craft-600">${{ "%.2f"|format(stats.total_revenue) }}</p>
+    </div>
+  </div>
+
+  <!-- Accesos rápidos -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <a href="/admin/productos" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+      <p class="text-2xl mb-2">📦</p>
+      <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Productos</h3>
+      <p class="text-sm text-leather-700">Gestionar catálogo</p>
+    </a>
+    <a href="/admin/categorias" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+      <p class="text-2xl mb-2">🏷️</p>
+      <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Categorías</h3>
+      <p class="text-sm text-leather-700">Organizar productos</p>
+    </a>
+    <a href="/admin/pedidos" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+      <p class="text-2xl mb-2">🧾</p>
+      <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Pedidos</h3>
+      <p class="text-sm text-leather-700">Ver y gestionar</p>
+    </a>
+        <a href="/admin/estadisticas" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+      <p class="text-2xl mb-2">📊</p>
+      <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Estadísticas</h3>
+      <p class="text-sm text-leather-700">Gráficos y métricas de ventas</p>
+    </a>
+    <a href="/admin/reseñas" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+      <p class="text-2xl mb-2">⭐</p>
+      <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Reseñas</h3>
+      <p class="text-sm text-leather-700">Moderar reseñas de clientes</p>
+    </a>
+  </div>
+
+  <!-- Pedidos recientes -->
+  {% if orders %}
+  <div class="bg-white rounded-xl shadow-sm p-6">
+    <h2 class="font-display text-2xl font-bold text-leather-900 mb-4">Pedidos Recientes</h2>
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="border-b border-gray-200">
+          <tr>
+            <th class="text-left py-3 px-4 text-sm font-semibold text-leather-900">ID</th>
+            <th class="text-left py-3 px-4 text-sm font-semibold text-leather-900">Fecha</th>
+            <th class="text-left py-3 px-4 text-sm font-semibold text-leather-900">Total</th>
+            <th class="text-left py-3 px-4 text-sm font-semibold text-leather-900">Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr class="border-b border-gray-100">
+            <td class="py-3 px-4 text-sm">#{{ order.id }}</td>
+            <td class="py-3 px-4 text-sm">{{ order.created_at.strftime('%d/%m/%Y') }}</td>
+            <td class="py-3 px-4 text-sm font-semibold">${{ "%.2f"|format(order.total) }}</td>
+            <td class="py-3 px-4 text-sm">
+              <span class="px-2 py-1 rounded text-xs font-semibold
+                {% if order.status == 'pending' %}bg-yellow-100 text-yellow-800
+                {% elif order.status == 'completed' %}bg-green-100 text-green-800
+                {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ order.status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

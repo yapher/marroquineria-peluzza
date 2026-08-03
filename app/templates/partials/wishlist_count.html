@@ -1,0 +1,9 @@
+<span id="wishlist-count" class="relative">
+  {% if current_user.is_authenticated and current_user.wishlist_count > 0 %}
+    <span class="text-red-500 hover:text-red-600">
+      ❤️ <span class="text-xs font-bold">{{ current_user.wishlist_count }}</span>
+    </span>
+  {% else %}
+    <span class="text-gray-400">❤️</span>
+  {% endif %}
+</span>

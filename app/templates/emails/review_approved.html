@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #fdf8f3; margin: 0; padding: 0; }
+    .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .header { background-color: #3d1d08; color: #ffffff; padding: 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { padding: 30px; }
+    .review-box { background-color: #fdf8f3; border-left: 4px solid #9a5f28; padding: 20px; margin: 20px 0; border-radius: 4px; }
+    .stars { color: #fbbf24; font-size: 20px; margin-bottom: 10px; }
+    .button { display: inline-block; background-color: #9a5f28; color: white !important; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 20px; }
+    .footer { background-color: #f9ebd9; padding: 20px; text-align: center; color: #6b3410; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⭐ ¡Tu reseña fue publicada!</h1>
+    </div>
+
+    <div class="content">
+      <p style="color: #3d1d08; font-size: 16px;">
+        Hola <strong>{{ review.user.first_name }}</strong>,
+      </p>
+      
+      <p style="color: #3d1d08; font-size: 16px;">
+        ¡Buenas noticias! Tu reseña del producto <strong>{{ review.product.name }}</strong> fue aprobada y ya está visible en nuestra tienda.
+      </p>
+
+      <div class="review-box">
+        <div class="stars">
+          {% for i in range(review.rating) %}⭐{% endfor %}
+        </div>
+        {% if review.comment %}
+        <p style="color: #6b3410; font-style: italic; margin: 0;">"{{ review.comment }}"</p>
+        {% endif %}
+      </div>
+
+      <p style="color: #3d1d08; font-size: 16px;">
+        ¡Gracias por compartir tu experiencia! Tu opinión ayuda a otros clientes a tomar mejores decisiones.
+      </p>
+
+      <p style="text-align: center;">
+        <a href="#" class="button">Ver tu reseña</a>
+      </p>
+    </div>
+
+    <div class="footer">
+      <p><strong>Marroquinería Artesanal</strong></p>
+      <p>Gracias por ser parte de nuestra comunidad.</p>
+    </div>
+  </div>
+</body>
+</html>

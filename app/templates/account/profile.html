@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Mi Perfil | Marroquinería Artesanal{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-12">
+  <h1 class="font-display text-4xl font-bold text-leather-900 mb-8">Mi Cuenta</h1>
+
+  <div class="bg-white rounded-xl shadow-sm p-8">
+    <div class="flex items-center gap-4 mb-8 pb-8 border-b border-gray-200">
+      <div class="w-16 h-16 bg-craft-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+        {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+      </div>
+      <div>
+        <h2 class="text-2xl font-bold text-leather-900">{{ current_user.full_name }}</h2>
+        <p class="text-leather-700">{{ current_user.email }}</p>
+        {% if current_user.is_admin %}
+          <span class="inline-block mt-2 px-3 py-1 bg-leather-900 text-white text-xs font-semibold rounded-full">Administrador</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <a href="/cuenta/pedidos" class="flex items-center gap-4 p-6 border border-gray-200 rounded-xl hover:border-craft-600 hover:bg-leather-50 transition group">
+        <span class="text-3xl">📦</span>
+        <div>
+          <h3 class="font-bold text-leather-900 group-hover:text-craft-600">Mis Pedidos</h3>
+          <p class="text-sm text-gray-500">Revisa el estado de tus compras</p>
+        </div>
+      </a>
+      
+      <a href="/auth/logout" class="flex items-center gap-4 p-6 border border-gray-200 rounded-xl hover:border-red-500 hover:bg-red-50 transition group">
+        <span class="text-3xl">🚪</span>
+        <div>
+          <h3 class="font-bold text-leather-900 group-hover:text-red-600">Cerrar Sesión</h3>
+          <p class="text-sm text-gray-500">Salir de tu cuenta de forma segura</p>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Marroquinería Artesanal{% endblock %}</title>
+  <meta name="description" content="{% block description %}Productos artesanales de cuero hechos a mano{% endblock %}">
+
+  <!-- Tailwind CSS vía CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            leather: { 50:'#fdf8f3', 100:'#f9ebd9', 700:'#6b3410', 900:'#3d1d08' },
+            craft:   { 500:'#b87333', 600:'#9a5f28' }
+          },
+          fontFamily: {
+            display: ['"Playfair Display"', 'serif'],
+            body:    ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- HTMX + Alpine.js -->
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+
+  <!-- ✅ CSRF Token para HTMX -->
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <script>
+    document.body.addEventListener('htmx:configRequest', (event) => {
+      event.detail.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    });
+  </script>
+
+  <style>
+    [x-cloak] { display: none !important; }
+  </style>
+</head>
+<body class="font-body bg-leather-50 text-leather-900 min-h-screen flex flex-col">
+
+  <!-- ========================================== -->
+  <!-- HEADER ORGANIZADO                          -->
+  <!-- ========================================== -->
+  <header class="bg-white shadow-sm sticky top-0 z-40">
+    <nav class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+      
+      <!-- 1. LOGO -->
+      <a href="/" class="font-display text-xl md:text-2xl text-leather-900 font-bold flex-shrink-0">
+        👜 Marroquinería
+      </a>
+
+      <!-- 2. NAVEGACIÓN CENTRAL (Desktop) -->
+      <div class="hidden lg:flex items-center gap-8 text-sm font-medium text-leather-700">
+        <a href="/tienda" class="hover:text-craft-600 transition">Tienda</a>
+        <a href="/tienda?categoria=billeteras" class="hover:text-craft-600 transition">Billeteras</a>
+        <a href="/tienda?categoria=bolsos" class="hover:text-craft-600 transition">Bolsos</a>
+        <a href="/tienda?categoria=cinturones" class="hover:text-craft-600 transition">Cinturones</a>
+      </div>
+
+      <!-- 3. ACCIONES DERECHA -->
+      <div class="flex items-center gap-3 md:gap-5">
+        
+        <!-- A. Búsqueda (Desktop) -->
+        <div class="relative hidden md:block w-40 lg:w-56">
+          <form hx-get="/tienda/buscar" 
+                hx-target="#search-results" 
+                hx-trigger="keyup changed delay:300ms, search"
+                hx-indicator="#search-spinner">
+            <div class="relative">
+              <input type="search" 
+                     name="q" 
+                     placeholder="Buscar..." 
+                     class="w-full pl-9 pr-4 py-2 bg-leather-50 border border-leather-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-craft-600 focus:bg-white transition">
+              <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-leather-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <span id="search-spinner" class="htmx-indicator absolute right-3 top-1/2 -translate-y-1/2 text-craft-600 text-xs hidden">...</span>
+            </div>
+          </form>
+          <!-- Contenedor de resultados de búsqueda -->
+          <div id="search-results" class="absolute top-full left-0 right-0 z-50 mt-1"></div>
+        </div>
+
+        <!-- B. Favoritos (Solo si está logueado) -->
+        {% if current_user.is_authenticated %}
+        <a href="/cuenta/favoritos" class="relative text-leather-700 hover:text-red-500 transition" title="Mis favoritos">
+          {% include "partials/wishlist_count.html" %}
+        </a>
+        {% endif %}
+
+        <!-- C. Carrito -->
+        <a href="/checkout/carrito" class="relative text-leather-700 hover:text-craft-600 transition" title="Carrito de compras">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          <span id="cart-count" class="absolute -top-2 -right-2 bg-craft-600 text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+            {{ cart_count }}
+          </span>
+        </a>
+
+        <!-- D. Menú de Usuario -->
+        {% if current_user.is_authenticated %}
+          <div class="relative group">
+            <button class="flex items-center gap-2 text-leather-700 hover:text-craft-600 transition">
+              <span class="w-8 h-8 bg-leather-100 rounded-full flex items-center justify-center text-sm font-bold text-leather-900 border border-leather-200">
+                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+              </span>
+              <span class="text-sm font-medium hidden xl:inline">{{ current_user.first_name }}</span>
+              <svg class="w-4 h-4 hidden xl:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+            
+            <!-- Dropdown -->
+            <div class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+              <a href="/cuenta" class="block px-4 py-2.5 text-sm text-leather-900 hover:bg-leather-50">Mi Cuenta</a>
+              <a href="/cuenta/pedidos" class="block px-4 py-2.5 text-sm text-leather-900 hover:bg-leather-50">Mis Pedidos</a>
+              <a href="/cuenta/favoritos" class="block px-4 py-2.5 text-sm text-leather-900 hover:bg-leather-50">❤️ Mis Favoritos</a>
+              <a href="/cuenta/fidelizacion" class="block px-4 py-2.5 text-sm text-leather-900 hover:bg-leather-50">🎁 Mis Puntos ({{ current_user.loyalty_points }})</a>
+              {% if current_user.is_admin %}
+                <hr class="my-1 border-gray-100">
+                <a href="/admin" class="block px-4 py-2.5 text-sm text-craft-600 font-semibold hover:bg-leather-50">⚙️ Panel Admin</a>
+              {% endif %}
+              <hr class="my-1 border-gray-100">
+              <a href="/auth/logout" class="block px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">Cerrar Sesión</a>
+            </div>
+          </div>
+        {% else %}
+          <div class="flex items-center gap-3">
+            <a href="/auth/login" class="text-sm font-medium text-leather-700 hover:text-craft-600 hidden sm:inline transition">Iniciar Sesión</a>
+            <a href="/auth/registro" class="bg-craft-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-craft-500 transition shadow-sm">Registrarse</a>
+          </div>
+        {% endif %}
+
+      </div>
+    </nav>
+  </header>
+
+  <!-- ========================================== -->
+  <!-- FLASH MESSAGES                             -->
+  <!-- ========================================== -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="max-w-7xl mx-auto px-4 mt-4 w-full">
+        {% for category, message in messages %}
+          <div class="p-4 rounded-lg mb-2 flex items-center gap-3 shadow-sm
+            {% if category == 'success' %}bg-green-50 text-green-800 border border-green-200
+            {% elif category == 'error' %}bg-red-50 text-red-800 border border-red-200
+            {% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}">
+            <span class="text-lg">
+              {% if category == 'success' %}✅
+              {% elif category == 'error' %}❌
+              {% else %}ℹ️{% endif %}
+            </span>
+            <span class="text-sm font-medium">{{ message }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- ========================================== -->
+  <!-- MAIN CONTENT                               -->
+  <!-- ========================================== -->
+  <main class="flex-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ========================================== -->
+  <!-- FOOTER                                     -->
+  <!-- ========================================== -->
+  <footer class="bg-leather-900 text-leather-50 mt-16">
+    <div class="max-w-7xl mx-auto px-4 py-12 grid md:grid-cols-4 gap-8">
+      <div>
+        <h3 class="font-display text-xl mb-3">Marroquinería Artesanal</h3>
+        <p class="text-sm opacity-80 leading-relaxed">Cuero genuino, hecho a mano con dedicación por artesanos locales.</p>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-3 text-white">Tienda</h4>
+        <ul class="space-y-2 text-sm opacity-80">
+          <li><a href="/tienda" class="hover:text-craft-500 transition">Todos los productos</a></li>
+          <li><a href="/tienda?sort=recent" class="hover:text-craft-500 transition">Novedades</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-3 text-white">Ayuda</h4>
+        <ul class="space-y-2 text-sm opacity-80">
+          <li><a href="/nosotros" class="hover:text-craft-500 transition">Nosotros</a></li>
+          <li><a href="/envios" class="hover:text-craft-500 transition">Envíos y Devoluciones</a></li>
+          <li><a href="/contacto" class="hover:text-craft-500 transition">Contacto</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-3 text-white">Newsletter</h4>
+        <p class="text-sm opacity-80 mb-3">Recibe ofertas exclusivas.</p>
+        <form class="flex">
+          <input type="email" placeholder="tu@email.com"
+                 class="flex-1 px-3 py-2 rounded-l bg-leather-50 text-leather-900 text-sm focus:outline-none">
+          <button class="px-4 bg-craft-600 rounded-r hover:bg-craft-500 transition font-bold">→</button>
+        </form>
+      </div>
+    </div>
+    <div class="border-t border-leather-700 py-6 text-center text-xs opacity-60">
+      © 2026 Marroquinería Artesanal. Todos los derechos reservados.
+    </div>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
