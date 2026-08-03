@@ -40,8 +40,14 @@ class ProductionConfig(Config):
     """Configuración de producción."""
     DEBUG = False
     
-    # psycopg3 usa el mismo formato de URL que psycopg2
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
+    # Render da URLs tipo postgres:// pero SQLAlchemy 2.x requiere postgresql+psycopg://
+    db_url = os.getenv("DATABASE_URL")
+    if db_url and db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif db_url and db_url.startswith("postgresql://"):
+        db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    
+    SQLALCHEMY_DATABASE_URI = db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
     # Opciones específicas para psycopg3
@@ -58,4 +64,3 @@ class ProductionConfig(Config):
     # Whitenoise para servir archivos estáticos
     STATIC_URL = "/static/"
     STATIC_ROOT = str(BASE_DIR / "staticfiles")
-    MAIL_SUPPRESS_SEND = False
