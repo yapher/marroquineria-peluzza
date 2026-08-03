@@ -120,3 +120,44 @@ def wishlist_count():
 def loyalty():
     """Página del programa de fidelización."""
     return render_template("account/loyalty.html")
+
+
+from flask import flash, redirect, url_for
+from flask_login import login_required, current_user
+from ...extensions import db
+
+@account_bp.route("/cambiar-password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    """Permite al usuario cambiar su contraseña."""
+    if request.method == "POST":
+        current_password = request.form.get("current_password", "")
+        new_password = request.form.get("new_password", "")
+        confirm_password = request.form.get("confirm_password", "")
+        
+        # Validar contraseña actual
+        if not current_user.check_password(current_password):
+            flash("❌ La contraseña actual es incorrecta", "error")
+            return redirect(url_for("account.change_password"))
+        
+        # Validar nueva contraseña
+        if len(new_password) < 6:
+            flash("❌ La nueva contraseña debe tener al menos 6 caracteres", "error")
+            return redirect(url_for("account.change_password"))
+        
+        if new_password != confirm_password:
+            flash("❌ Las contraseñas nuevas no coinciden", "error")
+            return redirect(url_for("account.change_password"))
+        
+        if new_password == current_password:
+            flash("❌ La nueva contraseña debe ser diferente a la actual", "error")
+            return redirect(url_for("account.change_password"))
+        
+        # Cambiar contraseña
+        current_user.set_password(new_password)
+        db.session.commit()
+        
+        flash("✅ Contraseña actualizada exitosamente", "success")
+        return redirect(url_for("account.profile"))
+    
+    return render_template("account/change_password.html")

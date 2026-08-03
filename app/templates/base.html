@@ -41,10 +41,145 @@
   </script>
 
   <style>
-    [x-cloak] { display: none !important; }
+    
+  [x-cloak] { display: none !important; }
+  
+  /* ============================================
+     LOADING GLOBAL PROFESIONAL
+     ============================================ */
+  
+  /* Overlay de carga */
+  #global-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(253, 248, 243, 0.85);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+  
+  #global-loader.active {
+    opacity: 1;
+    visibility: visible;
+  }
+  
+  /* Spinner profesional */
+  .loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f9ebd9;
+    border-top-color: #9a5f28;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  
+  .loader-text {
+    margin-top: 16px;
+    color: #6b3410;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  /* Barra superior de progreso (estilo YouTube) */
+  #progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #9a5f28, #b87333, #9a5f28);
+    background-size: 200% 100%;
+    z-index: 10000;
+    width: 0%;
+    transition: width 0.4s ease;
+    box-shadow: 0 0 10px rgba(154, 95, 40, 0.5);
+    animation: shimmer 2s infinite;
+  }
+  
+  #progress-bar.active {
+    width: 80%;
+  }
+  
+  #progress-bar.complete {
+    width: 100%;
+    opacity: 0;
+    transition: width 0.2s ease, opacity 0.5s ease 0.2s;
+  }
+  
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+  
+  /* Botones con loading */
+  button[disabled].loading,
+  a[disabled].loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+  }
+  
+  button[disabled].loading::after,
+  a[disabled].loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    margin: -8px 0 0 -8px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+  
+  /* Formularios durante submit */
+  form.submitting {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+  }
+  
+  form.submitting::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid #f9ebd9;
+    border-top-color: #9a5f28;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+</style>
   </style>
 </head>
 <body class="font-body bg-leather-50 text-leather-900 min-h-screen flex flex-col">
+
+  <!-- Barra de progreso superior -->
+<div id="progress-bar"></div>
+
+<!-- Overlay de carga global -->
+<div id="global-loader" x-data="{ message: 'Cargando...' }">
+  <div class="loader-spinner"></div>
+  <p class="loader-text" x-text="message">Cargando...</p>
+</div>
 
   <!-- ========================================== -->
   <!-- HEADER ORGANIZADO                          -->
@@ -208,5 +343,116 @@
   </footer>
 
   {% block scripts %}{% endblock %}
+
+  <script>
+(function() {
+  const loader = document.getElementById('global-loader');
+  const progressBar = document.getElementById('progress-bar');
+  
+  // Función helper para mostrar loader
+  function showLoader(message = 'Cargando...') {
+    if (loader && window.Alpine) {
+      Alpine.$data(loader).message = message;
+    }
+    loader?.classList.add('active');
+    progressBar?.classList.add('active');
+    progressBar?.classList.remove('complete');
+  }
+  
+  function hideLoader() {
+    loader?.classList.remove('active');
+    progressBar?.classList.add('complete');
+    setTimeout(() => {
+      progressBar?.classList.remove('active', 'complete');
+      progressBar.style.width = '0%';
+    }, 700);
+  }
+  
+  // ============================================
+  // 1. Loading al cambiar de página (navegación normal)
+  // ============================================
+  window.addEventListener('beforeunload', function(e) {
+    // Solo mostrar si es un enlace normal (no HTMX ni form)
+    if (!window._htmxRequest && !window._formSubmitting) {
+      showLoader('Cargando página...');
+    }
+  });
+  
+  // ============================================
+  // 2. Loading para clicks en enlaces normales
+  // ============================================
+  document.addEventListener('click', function(e) {
+    const link = e.target.closest('a[href]');
+    if (!link) return;
+    
+    const href = link.getAttribute('href');
+    
+    // Ignorar: anchors, javascript:, HTMX (ya tiene su propio loading), enlaces externos
+    if (!href || 
+        href.startsWith('#') || 
+        href.startsWith('javascript:') ||
+        link.hasAttribute('hx-get') || 
+        link.hasAttribute('hx-post') ||
+        link.hasAttribute('hx-delete') ||
+        link.hasAttribute('hx-put') ||
+        link.getAttribute('target') === '_blank' ||
+        href.startsWith('http') && !href.includes(window.location.hostname)) {
+      return;
+    }
+    
+    showLoader('Cargando página...');
+  });
+  
+  // ============================================
+  // 3. Loading para formularios
+  // ============================================
+  document.addEventListener('submit', function(e) {
+    const form = e.target;
+    if (form.hasAttribute('hx-post') || form.hasAttribute('hx-get')) return; // HTMX maneja su propio loading
+    
+    form.classList.add('submitting');
+    window._formSubmitting = true;
+    showLoader('Procesando...');
+  });
+  
+  // ============================================
+  // 4. Loading para peticiones HTMX
+  // ============================================
+  document.addEventListener('htmx:beforeRequest', function(e) {
+    window._htmxRequest = true;
+    // Solo mostrar loader si es una petición importante (no búsqueda en tiempo real)
+    const target = e.detail.elt;
+    if (!target.hasAttribute('hx-trigger') || !target.getAttribute('hx-trigger').includes('keyup')) {
+      progressBar?.classList.add('active');
+    }
+  });
+  
+  document.addEventListener('htmx:afterRequest', function(e) {
+    window._htmxRequest = false;
+    progressBar?.classList.remove('active');
+    progressBar?.classList.add('complete');
+    setTimeout(() => progressBar?.classList.remove('complete'), 700);
+  });
+  
+  document.addEventListener('htmx:responseError', function(e) {
+    window._htmxRequest = false;
+    hideLoader();
+  });
+  
+  // ============================================
+  // 5. Loading al cargar la página
+  // ============================================
+  window.addEventListener('load', function() {
+    hideLoader();
+    window._formSubmitting = false;
+  });
+  
+  // ============================================
+  // 6. Función global para usar desde botones
+  // ============================================
+  window.showGlobalLoader = showLoader;
+  window.hideGlobalLoader = hideLoader;
+  })();
+</script>
 </body>
 </html>
