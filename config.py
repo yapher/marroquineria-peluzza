@@ -14,13 +14,14 @@ class Config:
     MAX_CONTENT_LENGTH = 5 * 1024 * 1024
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
-    # ✅ Configuración de Email (Gmail) — SIN contraseñas en el código
+    # ✅ Configuración de Email (Gmail) — credenciales SOLO por variables de entorno
     MAIL_SERVER = os.getenv("MAIL_SERVER", "smtp.gmail.com")
     MAIL_PORT = int(os.getenv("MAIL_PORT", 587))
-    MAIL_USE_TLS = True
+    MAIL_USE_TLS = os.getenv("MAIL_USE_TLS", "True").lower() == "true"
+    MAIL_USE_SSL = os.getenv("MAIL_USE_SSL", "False").lower() == "true"
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
-    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")  # ✅ sin default
-    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", "Marroquinería Artesanal <tu-email@gmail.com>")
+    MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
+    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", "Marroquinería Artesanal <marroquineriapeluzza@gmail.com>")
 
     # Stripe
     STRIPE_PUBLIC_KEY = os.getenv("STRIPE_PUBLIC_KEY")
