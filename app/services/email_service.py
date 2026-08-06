@@ -27,7 +27,6 @@ def _send_with_gmail(subject: str, recipients: list[str], html_content: str) -> 
 
 
 def _send_with_resend(subject: str, recipients: list[str], html_content: str) -> bool:
-    """Respaldo opcional: Resend API (solo si RESEND_API_KEY está configurada)."""
     try:
         import resend
         api_key = os.getenv("RESEND_API_KEY")
@@ -35,7 +34,11 @@ def _send_with_resend(subject: str, recipients: list[str], html_content: str) ->
             return False
         resend.api_key = api_key
 
-        sender = os.getenv("MAIL_DEFAULT_SENDER", "onboarding@resend.dev")
+        # ⚠️ No podés usar tu gmail.com como "from" en Resend a menos que
+        # verifiques ese dominio (y gmail.com no se puede verificar).
+        # Usá el dominio de pruebas de Resend hasta que verifiques uno propio.
+        sender = "Marroquinería Artesanal <onboarding@resend.dev>"
+
         response = resend.Emails.send({
             "from": sender,
             "to": recipients,
@@ -50,11 +53,15 @@ def _send_with_resend(subject: str, recipients: list[str], html_content: str) ->
 
 
 def send_email(subject: str, recipients: list[str], template: str, **context):
-    """Envía un email. Prueba Gmail primero; si falla, usa Resend como respaldo."""
+    """
+    Envía un email.
+    - En producción (Render): usa Resend PRIMERO, porque el SMTP saliente
+      suele estar bloqueado o degradado (Gmail se cuelga hasta el timeout).
+    - En desarrollo local: usa Gmail primero.
+    """
     try:
         print(f"\n📧 Enviando email → {recipients} | Asunto: {subject}")
 
-        # Limpiar destinatarios con formato "Nombre <email>"
         cleaned_recipients = []
         for recipient in recipients:
             if '<' in recipient and '>' in recipient:
@@ -62,18 +69,19 @@ def send_email(subject: str, recipients: list[str], template: str, **context):
             else:
                 cleaned_recipients.append(recipient)
 
-        # Renderizar plantilla HTML
         html_content = render_template(template, **context)
 
-        # 1) GMAIL (método principal)
-        if os.getenv("MAIL_USERNAME") and os.getenv("MAIL_PASSWORD"):
-            if _send_with_gmail(subject, cleaned_recipients, html_content):
-                return True
+        is_production = current_app.config.get("DEBUG") is False
+        has_resend = bool(os.getenv("RESEND_API_KEY"))
+        has_gmail = bool(os.getenv("MAIL_USERNAME") and os.getenv("MAIL_PASSWORD"))
 
-        # 2) RESEND (respaldo automático si Gmail falló)
-        if os.getenv("RESEND_API_KEY"):
-            print("   ⚠️ Gmail falló, intentando con Resend...")
-            if _send_with_resend(subject, cleaned_recipients, html_content):
+        methods = [_send_with_resend, _send_with_gmail] if is_production else [_send_with_gmail, _send_with_resend]
+
+        for method in methods:
+            needs = has_gmail if method is _send_with_gmail else has_resend
+            if not needs:
+                continue
+            if method(subject, cleaned_recipients, html_content):
                 return True
 
         print("   ⚠️ No se pudo enviar el email (ningún método disponible)")
