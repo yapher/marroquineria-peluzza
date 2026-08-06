@@ -147,3 +147,74 @@ def force_create_admin():
     </html>
     """
     return html
+
+from flask import Response
+
+@main_bp.route("/sitemap.xml")
+def sitemap():
+    """Sitemap dinámico para Google."""
+    from datetime import datetime
+    from ...models import Product, Category
+    
+    base_url = request.host_url.rstrip('/')
+    
+    xml = '<?xml version="1.0" encoding="UTF-8"?>\n'
+    xml += '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+    
+    # Páginas estáticas
+    static_pages = [
+        {'url': '/', 'priority': '1.0', 'changefreq': 'daily'},
+        {'url': '/tienda', 'priority': '0.9', 'changefreq': 'daily'},
+        {'url': '/nosotros', 'priority': '0.6', 'changefreq': 'monthly'},
+        {'url': '/envios', 'priority': '0.5', 'changefreq': 'monthly'},
+        {'url': '/contacto', 'priority': '0.7', 'changefreq': 'monthly'},
+    ]
+    
+    for page in static_pages:
+        xml += '  <url>\n'
+        xml += f'    <loc>{base_url}{page["url"]}</loc>\n'
+        xml += f'    <lastmod>{datetime.utcnow().strftime("%Y-%m-%d")}</lastmod>\n'
+        xml += f'    <changefreq>{page["changefreq"]}</changefreq>\n'
+        xml += f'    <priority>{page["priority"]}</priority>\n'
+        xml += '  </url>\n'
+    
+    # Categorías
+    categories = Category.query.filter_by(active=True).all()
+    for cat in categories:
+        xml += '  <url>\n'
+        xml += f'    <loc>{base_url}/tienda?categoria={cat.slug}</loc>\n'
+        xml += f'    <lastmod>{datetime.utcnow().strftime("%Y-%m-%d")}</lastmod>\n'
+        xml += '    <changefreq>weekly</changefreq>\n'
+        xml += '    <priority>0.8</priority>\n'
+        xml += '  </url>\n'
+    
+    # Productos (los más importantes para SEO)
+    products = Product.query.filter_by(active=True).all()
+    for product in products:
+        last_mod = product.updated_at.strftime("%Y-%m-%d") if product.updated_at else datetime.utcnow().strftime("%Y-%m-%d")
+        xml += '  <url>\n'
+        xml += f'    <loc>{base_url}/tienda/producto/{product.slug}</loc>\n'
+        xml += f'    <lastmod>{last_mod}</lastmod>\n'
+        xml += '    <changefreq>weekly</changefreq>\n'
+        xml += '    <priority>0.9</priority>\n'
+        xml += '  </url>\n'
+    
+    xml += '</urlset>'
+    
+    return Response(xml, mimetype='application/xml')
+
+
+@main_bp.route("/robots.txt")
+def robots():
+    """Archivo robots.txt para buscadores."""
+    base_url = request.host_url.rstrip('/')
+    content = f"""User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /checkout/
+Disallow: /cuenta/
+Disallow: /api/
+
+Sitemap: {base_url}/sitemap.xml
+"""
+    return Response(content, mimetype='text/plain')

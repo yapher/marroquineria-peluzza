@@ -1,6 +1,49 @@
 {% extends "base.html" %}
 
-{% block title %}{{ product.name }} | Marroquinería Artesanal{% endblock %}
+{% block title %}{{ product.name }} - Marroquinería Peluzza{% endblock %}
+{% block description %}{{ product.short_description or product.description[:150] }} - Cuero genuino artesanal. Envío gratis en compras superiores a $100.{% endblock %}
+{% block keywords %}{{ product.name }}, {{ product.category.name }}, cuero artesanal, marroquinería argentina{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ product.name }} - Cuero Artesanal{% endblock %}
+{% block og_description %}{{ product.short_description or product.description[:150] }}{% endblock %}
+{% block og_image %}{% if product.images %}{{ url_for('static', filename='uploads/' + product.images[0].filename, _external=True) }}{% else %}{{ url_for('static', filename='images/og-image.jpg', _external=True) }}{% endif %}{% endblock %}
+{% block twitter_title %}{{ product.name }}{% endblock %}
+{% block twitter_description %}{{ product.short_description or product.description[:150] }}{% endblock %}
+{% block twitter_image %}{% if product.images %}{{ url_for('static', filename='uploads/' + product.images[0].filename, _external=True) }}{% else %}{{ url_for('static', filename='images/og-image.jpg', _external=True) }}{% endif %}{% endblock %}
+
+{% block head_extra %}
+<!-- Structured Data para Google (JSON-LD) -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org/",
+  "@type": "Product",
+  "name": "{{ product.name }}",
+  "image": [{% if product.images %}{% for img in product.images %}"{{ url_for('static', filename='uploads/' + img.filename, _external=True) }}"{% if not loop.last %},{% endif %}{% endfor %}{% endif %}],
+  "description": "{{ product.description|replace('"', '\\"')|replace('\n', ' ') }}",
+  "brand": {
+    "@type": "Brand",
+    "name": "Marroquinería Peluzza"
+  },
+  "category": "{{ product.category.name }}",
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ request.url }}",
+    "priceCurrency": "ARS",
+    "price": "{{ product.price }}",
+    "availability": "{% if product.stock > 0 %}https://schema.org/InStock{% else %}https://schema.org/OutOfStock{% endif %}",
+    "seller": {
+      "@type": "Organization",
+      "name": "Marroquinería Peluzza"
+    }
+  }{% if product.reviews %},
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "{{ product.average_rating }}",
+    "reviewCount": "{{ product.reviews|length }}"
+  }{% endif %}
+}
+</script>
+{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 py-8">
