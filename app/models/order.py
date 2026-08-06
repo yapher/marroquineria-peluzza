@@ -31,10 +31,7 @@ class Order(db.Model):
     shipping_cost: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
     total: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     
-    # Cupón aplicado
-    coupon_code: Mapped[str | None] = mapped_column(String(50))
-    coupon_discount: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
-
+    
     # Cupón aplicado
     coupon_code: Mapped[str | None] = mapped_column(String(50))
     coupon_discount: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)

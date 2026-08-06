@@ -5,6 +5,7 @@ from . import account_bp
 from ...models import Order, Product, Wishlist
 from ...extensions import db, csrf
 
+
 @account_bp.route("/")
 @login_required
 def profile():
@@ -30,8 +31,6 @@ def order_detail(order_id):
         
     return render_template("account/order_detail.html", order=order)
 
-from flask import request
-from ...models import Product, Wishlist
 
 
 @account_bp.route("/favoritos")
@@ -122,9 +121,6 @@ def loyalty():
     return render_template("account/loyalty.html")
 
 
-from flask import flash, redirect, url_for
-from flask_login import login_required, current_user
-from ...extensions import db
 
 @account_bp.route("/cambiar-password", methods=["GET", "POST"])
 @login_required

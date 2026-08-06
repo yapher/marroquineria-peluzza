@@ -12,7 +12,6 @@ from ...forms.admin_forms import ProductForm, CategoryForm
 from ...forms.coupon_forms import CouponForm
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
-from decimal import Decimal
 
 
 def admin_required(f):
