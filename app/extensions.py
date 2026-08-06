@@ -4,7 +4,6 @@ from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
 from flask_caching import Cache
 from flask_mail import Mail
-from flask_limiter.util import get_remote_address
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -12,7 +11,6 @@ login_manager = LoginManager()
 csrf = CSRFProtect()
 cache = Cache()
 mail = Mail()
-
 
 login_manager.login_view = "auth.login"
 login_manager.login_message_category = "warning"

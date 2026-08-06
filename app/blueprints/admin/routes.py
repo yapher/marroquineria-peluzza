@@ -12,6 +12,7 @@ from ...forms.admin_forms import ProductForm, CategoryForm
 from ...forms.coupon_forms import CouponForm
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
+from ...services.loyalty_service import award_points_for_order
 
 
 def admin_required(f):
@@ -150,9 +151,12 @@ def product_edit(product_id):
 @admin_required
 def product_delete(product_id):
     product = Product.query.get_or_404(product_id)
-    db.session.delete(product)
+    # ✅ Soft-delete: desactivar en vez de borrar físicamente.
+    # Borrarlo rompería wishlists y order_items que lo referencian (error en Postgres).
+    product.active = False
+    product.featured = False
     db.session.commit()
-    flash(f"✅ Producto '{product.name}' eliminado", "success")
+    flash(f"✅ Producto '{product.name}' desactivado (ya no aparece en la tienda)", "success")
     return redirect(url_for("admin.products"))
 
 
@@ -254,41 +258,59 @@ def order_detail(order_id):
 @admin_required
 def order_change_status(order_id):
     order = Order.query.get_or_404(order_id)
-    
     new_status = request.form.get("status")
     tracking_number = request.form.get("tracking_number", "").strip()
     notes = request.form.get("admin_notes", "").strip()
-    
-    # Validar que el nuevo estado sea válido
+
     if new_status not in order.next_statuses:
         flash(f"❌ No se puede cambiar de '{order.status_display}' a '{new_status}'", "error")
         return redirect(url_for("admin.order_detail", order_id=order.id))
-    
+
     old_status = order.status
     order.status = new_status
-    
-    # Guardar número de tracking si se envió
+
     if tracking_number and new_status == "shipped":
         order.tracking_number = tracking_number
-    
-    # Guardar notas del admin
+
     if notes:
         if order.admin_notes:
-            order.admin_notes += f"\n\n[{datetime.utcnow().strftime('%d/%m/%Y %H:%M')}]\n{notes}"
+            order.admin_notes += f"\n[{datetime.utcnow().strftime('%d/%m/%Y %H:%M')}] {notes}"
         else:
-            order.admin_notes = f"[{datetime.utcnow().strftime('%d/%m/%Y %H:%M')}]\n{notes}"
-    
+            order.admin_notes = f"[{datetime.utcnow().strftime('%d/%m/%Y %H:%M')}] {notes}"
+
+    # ✅ Si el admin marca como pagado manualmente, replicar lo de confirm_payment:
+    # otorgar puntos, reducir stock e incrementar usos del cupón
+    if new_status == "paid" and old_status in ("pending_payment", "pending"):
+        if order.user_id:
+            user = User.query.get(order.user_id)
+            if user:
+                award_points_for_order(order, user)
+        for item in order.items:
+            product = Product.query.get(item.product_id)
+            if product:
+                product.stock -= item.quantity
+        if order.coupon_code:
+            coupon = Coupon.query.filter_by(code=order.coupon_code).first()
+            if coupon:
+                coupon.uses_count += 1
+
+    # ✅ Si se cancela un pedido que ya estaba pagado, restaurar el stock
+    if new_status == "cancelled" and old_status in ("paid", "preparing", "shipped"):
+        for item in order.items:
+            product = Product.query.get(item.product_id)
+            if product:
+                product.stock += item.quantity
+
     db.session.commit()
-    
-    # Enviar email de notificación al cliente
+
     try:
         from ...services.email_service import send_order_status_update
         send_order_status_update(order, old_status, new_status)
         flash(f"✅ Estado actualizado y email enviado a {order.customer_email}", "success")
     except Exception as e:
         current_app.logger.error(f"Error enviando email: {e}")
-        flash(f"✅ Estado actualizado (pero no se pudo enviar el email)", "warning")
-    
+        flash("✅ Estado actualizado (pero no se pudo enviar el email)", "warning")
+
     return redirect(url_for("admin.order_detail", order_id=order.id))
 
 

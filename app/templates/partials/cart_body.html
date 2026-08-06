@@ -1,54 +1,71 @@
-<tbody id="cart-body">
-    {% for item in cart.items %}
-    <tr id="row-{{ item.product.id }}" class="border-b border-gray-100">
-        <td class="py-4 px-4">
-            <div class="flex items-center gap-4">
-                <div class="w-16 h-16 bg-leather-100 rounded-lg flex items-center justify-center text-2xl">👜</div>
-                <div>
-                    <h4 class="font-semibold text-leather-900">{{ item.product.name }}</h4>
-                    <p class="text-sm text-gray-500">${{ "%.2f"|format(item.product.price) }} c/u</p>
+<table id="cart-table" class="w-full text-left">
+    <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+            <th class="py-4 px-4 font-semibold text-leather-900">Producto</th>
+            <th class="py-4 px-4 font-semibold text-leather-900">Cantidad</th>
+            <th class="py-4 px-4 font-semibold text-leather-900">Subtotal</th>
+            <th class="py-4 px-4"></th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for item in cart.items %}
+        <tr id="row-{{ item.product.id }}" class="border-b border-gray-100">
+            <td class="py-4 px-4">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-leather-100 rounded-lg flex items-center justify-center text-2xl">👜</div>
+                    <div>
+                        <h4 class="font-semibold text-leather-900">{{ item.product.name }}</h4>
+                        <p class="text-sm text-gray-500">${{ "%.2f"|format(item.product.price) }} c/u</p>
+                    </div>
                 </div>
-            </div>
-        </td>
-        <td class="py-4 px-4">
-            <form hx-post="/checkout/carrito/update" hx-target="#cart-body" hx-swap="innerHTML" class="flex items-center border border-gray-300 rounded-lg w-max bg-white">
-                <input type="hidden" name="product_id" value="{{ item.product.id }}">
-                <button type="submit" name="quantity" value="{{ item.quantity - 1 }}" class="px-3 py-1 hover:bg-gray-100 text-leather-900" {% if item.quantity <= 1 %}disabled{% endif %}>−</button>
-                <span class="px-3 py-1 font-medium text-leather-900 min-w-[2rem] text-center">{{ item.quantity }}</span>
-                <button type="submit" name="quantity" value="{{ item.quantity + 1 }}" class="px-3 py-1 hover:bg-gray-100 text-leather-900">+</button>
-            </form>
-        </td>
-        <td class="py-4 px-4 font-bold text-leather-900">
-            ${{ "%.2f"|format(item.subtotal) }}
-        </td>
-        <td class="py-4 px-4 text-right">
-            <button hx-post="/checkout/carrito/remove/{{ item.product.id }}" hx-target="#cart-body" hx-swap="innerHTML" class="text-red-500 hover:text-red-700 text-sm font-medium underline">
-                Eliminar
-            </button>
-        </td>
-    </tr>
-    {% else %}
-    <tr>
-        <td colspan="4" class="py-12 text-center text-gray-500">
-            Tu carrito está vacío. <a href="/tienda" class="text-craft-600 underline">Ir a la tienda</a>
-        </td>
-    </tr>
-    {% endfor %}
-</tbody>
-
-<!-- Total del carrito (siempre se renderiza junto al body) -->
-<tfoot class="bg-gray-50">
-    <tr>
-        <td colspan="2" class="py-4 px-4 text-right font-semibold text-leather-900">Total:</td>
-        <td colspan="2" class="py-4 px-4 font-bold text-xl text-craft-600" id="cart-total-price">
-            ${{ "%.2f"|format(cart.total_price) }}
-        </td>
-    </tr>
-    <tr>
-        <td colspan="4" class="py-4 px-4 text-right">
-           <a href="/checkout/checkout" class="bg-leather-900 text-white px-8 py-3 rounded-lg font-semibold hover:bg-craft-600 transition inline-block">
-              Finalizar Compra
-          </a>
-        </td>
-    </tr>
-</tfoot>
+            </td>
+            <td class="py-4 px-4">
+                <form hx-post="/checkout/carrito/update" hx-target="#cart-table" hx-swap="outerHTML"
+                      class="flex items-center border border-gray-300 rounded-lg w-max bg-white">
+                    <input type="hidden" name="product_id" value="{{ item.product.id }}">
+                    <button type="submit" name="quantity" value="{{ item.quantity - 1 }}"
+                            class="px-3 py-1 hover:bg-gray-100 text-leather-900"
+                            {% if item.quantity <= 1 %}disabled{% endif %}>−</button>
+                    <span class="px-3 py-1 font-medium text-leather-900 min-w-[2rem] text-center">{{ item.quantity }}</span>
+                    <button type="submit" name="quantity" value="{{ item.quantity + 1 }}"
+                            class="px-3 py-1 hover:bg-gray-100 text-leather-900">+</button>
+                </form>
+            </td>
+            <td class="py-4 px-4 font-bold text-leather-900">
+                ${{ "%.2f"|format(item.subtotal) }}
+            </td>
+            <td class="py-4 px-4 text-right">
+                <button hx-post="/checkout/carrito/remove/{{ item.product.id }}"
+                        hx-target="#cart-table" hx-swap="outerHTML"
+                        class="text-red-500 hover:text-red-700 text-sm font-medium underline">
+                    Eliminar
+                </button>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="4" class="py-12 text-center text-gray-500">
+                Tu carrito está vacío. <a href="/tienda" class="text-craft-600 underline">Ir a la tienda</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    <tfoot class="bg-gray-50">
+        <tr>
+            <td colspan="2" class="py-4 px-4 text-right font-semibold text-leather-900">Total:</td>
+            <td colspan="2" class="py-4 px-4 font-bold text-xl text-craft-600">
+                ${{ "%.2f"|format(cart.total_price) }}
+            </td>
+        </tr>
+        <tr>
+            <td colspan="4" class="py-4 px-4 text-right">
+                {% if cart.total_items > 0 %}
+                <a href="/checkout/checkout"
+                   class="bg-leather-900 text-white px-8 py-3 rounded-lg font-semibold hover:bg-craft-600 transition inline-block">
+                    Finalizar Compra
+                </a>
+                {% endif %}
+            </td>
+        </tr>
+    </tfoot>
+</table>

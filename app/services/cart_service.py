@@ -2,18 +2,28 @@ from flask import session
 from ..models import Product
 from ..extensions import db
 
+
 class Cart:
     def __init__(self):
         if "cart" not in session:
             session["cart"] = {}
 
-    def add(self, product_id: int, quantity: int = 1):
+    def add(self, product_id: int, quantity: int = 1) -> bool:
+        """Agrega un producto respetando el stock disponible."""
+        product = db.session.get(Product, product_id)
+        if not product or not product.active:
+            return False
+
         pid = str(product_id)
-        if pid in session["cart"]:
-            session["cart"][pid]["quantity"] += quantity
-        else:
-            session["cart"][pid] = {"quantity": quantity}
+        current = session["cart"].get(pid, {}).get("quantity", 0)
+        new_quantity = min(current + quantity, product.stock)  # ✅ tope de stock
+
+        if new_quantity <= 0:
+            return False
+
+        session["cart"][pid] = {"quantity": new_quantity}
         session.modified = True
+        return True
 
     def remove(self, product_id: int):
         pid = str(product_id)
@@ -22,16 +32,42 @@ class Cart:
             session.modified = True
 
     def update(self, product_id: int, quantity: int):
+        """Actualiza cantidad. Robusto ante None o productos inexistentes."""
         pid = str(product_id)
-        if quantity > 0:
-            session["cart"][pid]["quantity"] = quantity
-            session.modified = True
-        else:
+        if pid not in session["cart"]:
+            return
+
+        if quantity is None or quantity <= 0:
             self.remove(product_id)
+            return
+
+        # ✅ no permitir más que el stock
+        product = db.session.get(Product, product_id)
+        if product:
+            quantity = min(quantity, product.stock)
+            if quantity <= 0:
+                self.remove(product_id)
+                return
+
+        session["cart"][pid]["quantity"] = quantity
+        session.modified = True
 
     def clear(self):
         session["cart"] = {}
         session.modified = True
+
+    def get_quantity(self, product_id: int) -> int:
+        """Cantidad de un producto actualmente en el carrito."""
+        return session["cart"].get(str(product_id), {}).get("quantity", 0)
+
+    def validate_stock(self):
+        """Verifica que todo el carrito tenga stock suficiente.
+        Devuelve (es_valido, producto_con_problema)."""
+        for pid, data in session["cart"].items():
+            product = db.session.get(Product, int(pid))
+            if not product or not product.active or product.stock < data["quantity"]:
+                return False, product
+        return True, None
 
     @property
     def items(self):

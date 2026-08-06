@@ -151,18 +151,19 @@
         </div>
         
         <div class="flex-1 space-y-2">
-          {% for stars in [5, 4, 3, 2, 1] %}
-            {% set count = product.reviews|selectattr('rating', 'equalto', stars)|list|length %}
-            {% set percentage = (count / product.review_count * 100)|round if product.review_count > 0 else 0 %}
-            <div class="flex items-center gap-3">
-              <span class="text-sm text-leather-700 w-12">{{ stars }} ⭐</span>
-              <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                <div class="h-full bg-yellow-400" style="width: {{ percentage }}%"></div>
-              </div>
-              <span class="text-sm text-leather-700 w-8 text-right">{{ count }}</span>
-            </div>
-          {% endfor %}
+    {% set approved_reviews = product.reviews|selectattr('approved')|list %}
+    {% for stars in [5, 4, 3, 2, 1] %}
+    {% set count = approved_reviews|selectattr('rating', 'equalto', stars)|list|length %}
+    {% set percentage = (count / product.review_count * 100)|round if product.review_count > 0 else 0 %}
+    <div class="flex items-center gap-3">
+        <span class="text-sm text-leather-700 w-12">{{ stars }} ⭐</span>
+        <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div class="h-full bg-yellow-400" style="width: {{ percentage }}%"></div>
         </div>
+        <span class="text-sm text-leather-700 w-8 text-right">{{ count }}</span>
+    </div>
+    {% endfor %}
+</div>
       </div>
     </div>
     {% endif %}
