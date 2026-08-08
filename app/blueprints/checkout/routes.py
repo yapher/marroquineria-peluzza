@@ -8,26 +8,22 @@ from ...forms.checkout_forms import CheckoutForm
 from ...extensions import db, csrf
 from ...services.loyalty_service import award_points_for_order
 
-
 # ============================================
-# CARRITO (sin cambios)
+# CARRITO
 # ============================================
 @checkout_bp.route("/test")
 def test_route():
     return "✅ ¡El blueprint de checkout está funcionando!"
-
 
 @checkout_bp.route("/carrito")
 def view_cart():
     cart = Cart()
     return render_template("checkout/cart.html", cart=cart)
 
-
 @checkout_bp.route("/carrito/count")
 def cart_count():
     cart = Cart()
     return render_template("partials/cart_count.html", count=cart.total_items)
-
 
 @csrf.exempt
 @checkout_bp.route("/agregar/<int:product_id>", methods=["POST"])
@@ -41,7 +37,6 @@ def add_to_cart(product_id):
     flash(f"✅ {product.name} agregado al carrito.", "success")
     return redirect(url_for("checkout.view_cart"))
 
-
 @csrf.exempt
 @checkout_bp.route("/carrito/update", methods=["POST"])
 def update_cart():
@@ -50,7 +45,6 @@ def update_cart():
     cart = Cart()
     cart.update(product_id, quantity)
     return render_template("partials/cart_body.html", cart=Cart())
-
 
 @csrf.exempt
 @checkout_bp.route("/carrito/remove/<int:product_id>", methods=["POST"])
@@ -62,7 +56,6 @@ def remove_from_cart(product_id):
     flash("Producto eliminado del carrito.", "info")
     return redirect(url_for("checkout.view_cart"))
 
-
 # ============================================
 # CHECKOUT
 # ============================================
@@ -72,25 +65,31 @@ def checkout_page():
     if cart.total_items == 0:
         flash("Tu carrito está vacío", "warning")
         return redirect(url_for("checkout.view_cart"))
-
     form = CheckoutForm()
     if current_user.is_authenticated:
         form.email.data = current_user.email
         form.name.data = current_user.full_name
-
     coupon_code = session.get("coupon_code")
     coupon_discount = Decimal("0")
     if coupon_code:
         coupon = Coupon.query.filter_by(code=coupon_code).first()
         if coupon and coupon.is_valid:
             coupon_discount = coupon.apply_discount(cart.total_price)
-
+    # Calcular descuento por nivel
+    level_discount = Decimal("0")
+    if current_user.is_authenticated:
+        discount_percent = current_user.loyalty_discount
+        if discount_percent > 0:
+            base_for_level = cart.total_price - coupon_discount
+            level_discount = base_for_level * Decimal(discount_percent) / Decimal("100")
+    shipping_cost = Decimal("10.00")
     return render_template("checkout/checkout.html",
                            cart=cart,
                            form=form,
                            coupon_code=coupon_code,
-                           coupon_discount=coupon_discount)
-
+                           coupon_discount=coupon_discount,
+                           level_discount=level_discount,
+                           shipping_cost=shipping_cost)
 
 @checkout_bp.route("/aplicar-cupon", methods=["POST"])
 def apply_coupon():
@@ -98,32 +97,26 @@ def apply_coupon():
     if not code:
         flash("Ingresa un código de cupón", "error")
         return redirect(url_for("checkout.checkout_page"))
-
     coupon = Coupon.query.filter_by(code=code).first()
     if not coupon:
         flash("❌ Cupón no encontrado", "error")
         return redirect(url_for("checkout.checkout_page"))
-
     if not coupon.is_valid:
         flash("❌ Este cupón ya no es válido", "error")
         return redirect(url_for("checkout.checkout_page"))
-
     cart = Cart()
     if cart.total_price < coupon.min_purchase:
         flash(f"❌ Compra mínima requerida: ${coupon.min_purchase}", "error")
         return redirect(url_for("checkout.checkout_page"))
-
     session["coupon_code"] = code
     flash(f"✅ Cupón '{code}' aplicado exitosamente", "success")
     return redirect(url_for("checkout.checkout_page"))
-
 
 @checkout_bp.route("/quitar-cupon")
 def remove_coupon():
     session.pop("coupon_code", None)
     flash("Cupón removido", "info")
     return redirect(url_for("checkout.checkout_page"))
-
 
 # ============================================
 # PROCESAR PEDIDO → MERCADO PAGO
@@ -150,7 +143,6 @@ def process_checkout():
 
     subtotal = cart.total_price
     shipping_cost = Decimal("10.00")
-
     coupon_code = None
     coupon_discount = Decimal("0")
     if "coupon_code" in session:
@@ -214,10 +206,8 @@ def process_checkout():
         return redirect(url_for("checkout.checkout_page"))
 
     session["pending_order_id"] = order.id
-
     # ✅ El carrito NO se limpia acá: se limpia recién cuando se confirma el pago
     return redirect(preference["init_point"])
-
 
 # ============================================
 # RETORNO DESDE MERCADO PAGO
@@ -226,7 +216,6 @@ def process_checkout():
 def payment_return(order_id):
     """Mercado Pago redirige acá después de pagar."""
     order = Order.query.get_or_404(order_id)
-
     payment_id = request.args.get("payment_id") or request.args.get("collection_id")
 
     if not payment_id:
@@ -300,18 +289,15 @@ def payment_success(order_id):
         return redirect(url_for("main.index"))
     return render_template("checkout/payment_success.html", order=order)
 
-
 @checkout_bp.route("/pago/pendiente/<int:order_id>")
 def payment_pending(order_id):
     order = Order.query.get_or_404(order_id)
     return render_template("checkout/payment_pending.html", order=order)
 
-
 @checkout_bp.route("/pago/fallido/<int:order_id>")
 def payment_failure(order_id):
     order = Order.query.get_or_404(order_id)
     return render_template("checkout/payment_failure.html", order=order)
-
 
 @checkout_bp.route("/pago/reintentar/<int:order_id>", methods=["POST"])
 def retry_payment(order_id):
@@ -320,14 +306,12 @@ def retry_payment(order_id):
     if order.status != "pending_payment":
         flash("Este pedido ya fue procesado", "warning")
         return redirect(url_for("checkout.payment_success", order_id=order.id))
-
     from ...services.mercadopago_service import create_preference
     preference = create_preference(order)
     if not preference:
         flash("❌ Error al conectar con Mercado Pago", "error")
         return redirect(url_for("main.index"))
     return redirect(preference["init_point"])
-
 
 @checkout_bp.route("/pago/cancelado")
 def payment_cancel():
@@ -338,6 +322,7 @@ def payment_cancel():
         if order and order.status == "pending_payment":
             db.session.delete(order)
             db.session.commit()
-        session.pop("pending_order_id", None)
-    flash("Pedido cancelado. Tu carrito sigue intacto.", "info")
+            session.pop("pending_order_id", None)
+            flash("Pedido cancelado. Tu carrito sigue intacto.", "info")
+            return redirect(url_for("checkout.view_cart"))
     return redirect(url_for("checkout.view_cart"))

@@ -28,8 +28,9 @@ services:
         sync: false
       - key: MAIL_DEFAULT_SENDER
         sync: false
-                - key: MP_ACCESS_TOKEN
-          sync: false
+      # ✅ NUEVO: Mercado Pago
+      - key: MP_ACCESS_TOKEN
+        sync: false
 
 databases:
   - name: marroquineria-db

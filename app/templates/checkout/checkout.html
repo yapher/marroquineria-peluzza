@@ -3,14 +3,11 @@
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 py-8">
     <h1 class="font-display text-4xl font-bold text-leather-900 mb-8">Finalizar Compra</h1>
-
     <div class="grid lg:grid-cols-3 gap-8">
-
         <!-- FORMULARIO -->
         <div class="lg:col-span-2">
             <form method="POST" action="/checkout/checkout/procesar" class="bg-white rounded-xl shadow-sm p-8 space-y-6">
                 {{ form.hidden_tag() }}
-
                 <div>
                     <h2 class="font-display text-2xl font-bold text-leather-900 mb-4">Datos de Contacto</h2>
                     <div class="space-y-4">
@@ -30,7 +27,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div>
                     <h2 class="font-display text-2xl font-bold text-leather-900 mb-4">Dirección de Envío</h2>
                     <div class="space-y-4">
@@ -64,23 +60,19 @@
                         </div>
                     </div>
                 </div>
-
                 <div>
                     <label class="block text-sm font-semibold text-leather-900 mb-2">Notas del pedido (opcional)</label>
                     {{ form.notes(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600 h-20", placeholder="Instrucciones especiales de entrega, horario preferido, etc.") }}
                 </div>
-
                 <button type="submit" class="w-full bg-craft-600 text-white font-semibold py-4 rounded-lg hover:bg-craft-500 transition text-lg">
-                    Confirmar Pedido
+                    💳 Pagar con Mercado Pago
                 </button>
             </form>
         </div>
-
         <!-- RESUMEN DEL PEDIDO -->
         <div class="lg:col-span-1">
             <div class="bg-white rounded-xl shadow-sm p-6 sticky top-24">
                 <h2 class="font-display text-2xl font-bold text-leather-900 mb-4">Resumen del Pedido</h2>
-
                 <div class="space-y-3 mb-6">
                     {% for item in cart.items %}
                     <div class="flex justify-between text-sm">
@@ -92,7 +84,6 @@
                     </div>
                     {% endfor %}
                 </div>
-
                 <div class="border-t border-gray-200 pt-4 space-y-2">
                     <div class="flex justify-between text-sm">
                         <span class="text-leather-700">Subtotal</span>
@@ -119,7 +110,6 @@
                         <span class="text-craft-600">${{ "%.2f"|format(cart.total_price + shipping_cost - coupon_discount - level_discount) }}</span>
                     </div>
                 </div>
-
                 <!-- Campo de cupón -->
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     {% if coupon_code %}
@@ -141,16 +131,14 @@
                     </form>
                     {% endif %}
                 </div>
-
                 <div class="mt-6 pt-6 border-t border-gray-200">
                     <p class="text-xs text-gray-500 text-center">
-                        🔒 Pago seguro y encriptado<br>
+                        🔒 Pago seguro con Mercado Pago<br>
                         Tus datos están protegidos
                     </p>
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 {% endblock %}
