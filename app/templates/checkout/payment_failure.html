@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Pago rechazado | Marroquinería Artesanal{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 py-16 text-center">
+    <div class="text-6xl mb-4">❌</div>
+    <h1 class="font-display text-3xl font-bold text-leather-900 mb-3">El pago no pudo completarse</h1>
+    <p class="text-leather-700 mb-6">
+        Tu pedido <strong>#{{ order.id }}</strong> sigue guardado.
+        Podés intentar de nuevo con otra tarjeta u otro medio de pago.
+    </p>
+    <div class="flex gap-3 justify-center flex-wrap">
+        <form method="POST" action="{{ url_for('checkout.retry_payment', order_id=order.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="bg-craft-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-craft-500 transition">
+                🔄 Reintentar el pago
+            </button>
+        </form>
+        <a href="{{ url_for('checkout.payment_cancel') }}"
+           class="border-2 border-leather-900 text-leather-900 px-8 py-3 rounded-lg font-semibold hover:bg-leather-900 hover:text-white transition">
+            Cancelar pedido
+        </a>
+    </div>
+</div>
+{% endblock %}
