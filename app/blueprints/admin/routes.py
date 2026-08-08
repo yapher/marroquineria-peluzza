@@ -1,5 +1,3 @@
-import os
-import uuid
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from functools import wraps
@@ -60,17 +58,10 @@ def product_new():
 
         file = request.files.get('image')
         if file and file.filename and file.filename != '':
-            original_filename = secure_filename(file.filename)
-            ext = original_filename.rsplit('.', 1)[1].lower()
-            unique_filename = f"{uuid.uuid4().hex}.{ext}"
-
-            upload_folder = current_app.config['UPLOAD_FOLDER']
-            os.makedirs(upload_folder, exist_ok=True)
-
-            save_path = os.path.join(upload_folder, unique_filename)
-            file.save(save_path)
-
-            image_url = f"/static/img/products/{unique_filename}"
+            from ...services.storage_service import upload_image
+            image_url = upload_image(file)
+            if not image_url:
+                flash("⚠️ No se pudo subir la imagen. El producto se creará sin imagen.", "warning")
 
         product = Product(
             name=form.name.data,
@@ -92,7 +83,7 @@ def product_new():
         db.session.commit()
 
         if image_url:
-            flash(f"✅ Producto creado con imagen: {image_url}", "success")
+            flash("✅ Producto creado con imagen (guardada en la nube)", "success")
         else:
             flash(f"✅ Producto '{product.name}' creado (sin imagen)", "success")
         return redirect(url_for("admin.products"))
@@ -101,8 +92,8 @@ def product_new():
         for field, errors in form.errors.items():
             for error in errors:
                 flash(f"Error en {field}: {error}", "error")
-
     return render_template("admin/product_form.html", form=form, title="Nuevo Producto")
+
 
 
 @admin_bp.route("/productos/<int:product_id>/editar", methods=["GET", "POST"])
@@ -110,7 +101,6 @@ def product_new():
 def product_edit(product_id):
     product = Product.query.get_or_404(product_id)
     form = ProductForm(obj=product)
-
     if form.validate_on_submit():
         product.name = form.name.data
         product.slug = form.slug.data or slugify(form.name.data)
@@ -128,23 +118,19 @@ def product_edit(product_id):
 
         file = request.files.get('image')
         if file and file.filename and file.filename != '':
-            original_filename = secure_filename(file.filename)
-            ext = original_filename.rsplit('.', 1)[1].lower()
-            unique_filename = f"{uuid.uuid4().hex}.{ext}"
-
-            upload_folder = current_app.config['UPLOAD_FOLDER']
-            os.makedirs(upload_folder, exist_ok=True)
-
-            save_path = os.path.join(upload_folder, unique_filename)
-            file.save(save_path)
-
-            product.image_url = f"/static/img/products/{unique_filename}"
+            from ...services.storage_service import upload_image, delete_image
+            new_url = upload_image(file)
+            if new_url:
+                delete_image(product.image_url)  # borra la anterior si estaba en Cloudinary
+                product.image_url = new_url
+            else:
+                flash("⚠️ No se pudo subir la nueva imagen", "warning")
 
         db.session.commit()
         flash(f"✅ Producto '{product.name}' actualizado", "success")
         return redirect(url_for("admin.products"))
-
     return render_template("admin/product_form.html", form=form, product=product, title="Editar Producto")
+
 
 
 @admin_bp.route("/productos/<int:product_id>/eliminar", methods=["POST"])
