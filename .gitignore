@@ -43,3 +43,7 @@ htmlcov/
 # Uploads (archivos subidos por usuarios)
 app/static/uploads/*
 !app/static/uploads/.gitkeep
+
+# elimina proyecto en el servidor
+Proyecto_Completo.txt
+exportar_proyecto.py
