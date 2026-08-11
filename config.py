@@ -60,3 +60,4 @@ class ProductionConfig(Config):
 
     STATIC_URL = "/static/"
     STATIC_ROOT = str(BASE_DIR / "staticfiles")
+    PREFERRED_URL_SCHEME = "https"

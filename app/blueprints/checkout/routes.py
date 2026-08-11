@@ -7,6 +7,7 @@ from ...models import Product, Order, OrderItem, Coupon, User
 from ...forms.checkout_forms import CheckoutForm
 from ...extensions import db, csrf
 from ...services.loyalty_service import award_points_for_order
+from ...services.order_service import confirm_order_payment
 
 # ============================================
 # CARRITO
@@ -226,8 +227,7 @@ def payment_return(order_id):
     payment = verify_payment(payment_id)
 
     if payment and payment.get("status") == "approved":
-        if order.status == "pending_payment":
-            _confirm_order_payment(order, payment)
+        _confirm_order_payment(order, payment)
         return redirect(url_for("checkout.payment_success", order_id=order.id))
 
     if payment and payment.get("status") in ("pending", "in_process", "authorized"):
@@ -237,30 +237,19 @@ def payment_return(order_id):
 
 
 def _confirm_order_payment(order, payment):
-    """Confirma el pago: stock, puntos, cupón, carrito y email."""
-    order.status = "paid"
-    order.payment_method = "mercadopago"
-    order.payment_status = payment.get("status", "succeeded")
-    order.payment_id = str(payment.get("id", ""))
+    """
+    Confirma el pago delegando al servicio centralizado (order_service),
+    y si fue el servicio quien efectivamente confirmó el pago ahora,
+    limpia el carrito y las cookies de sesión del comprador.
 
-    # Puntos de fidelización
-    if order.user_id:
-        user = User.query.get(order.user_id)
-        award_points_for_order(order, user)
-
-    # Reducir stock
-    for item in order.items:
-        product = Product.query.get(item.product_id)
-        if product:
-            product.stock -= item.quantity
-
-    # Incrementar uso del cupón
-    if order.coupon_code:
-        coupon = Coupon.query.filter_by(code=order.coupon_code).first()
-        if coupon:
-            coupon.uses_count += 1
-
-    db.session.commit()
+    Esta función existe como wrapper porque el carrito/sesión solo tienen
+    sentido acá (retorno del comprador, con su navegador activo) — el
+    webhook de MP no tiene sesión del comprador, así que llama directo
+    a confirm_order_payment().
+    """
+    was_confirmed = confirm_order_payment(order, payment)
+    if not was_confirmed:
+        return
 
     # ✅ Limpiar del carrito SOLO los productos comprados
     cart = Cart()
@@ -270,12 +259,66 @@ def _confirm_order_payment(order, payment):
     session.pop("pending_order_id", None)
     session.pop("coupon_code", None)
 
-    # Email de confirmación
-    try:
-        from ...services.email_service import send_order_confirmation
-        send_order_confirmation(order)
-    except Exception as e:
-        current_app.logger.error(f"Error enviando email: {e}")
+
+# ============================================
+# WEBHOOK DE MERCADO PAGO (server-to-server)
+# ============================================
+@csrf.exempt
+@checkout_bp.route("/webhook/mercadopago", methods=["POST"])
+def mercadopago_webhook():
+    """
+    Recibe notificaciones de Mercado Pago cuando cambia el estado de un pago.
+    A diferencia de payment_return, esto llega directo desde los servidores
+    de MP sin depender de que el comprador vuelva al sitio, así que es la
+    fuente de verdad real para confirmar pagos (evita pedidos que quedan
+    colgados en pending_payment si el usuario cierra la pestaña).
+
+    Siempre responde 200 rápido, incluso ante datos inválidos, para que
+    Mercado Pago no reintente esta notificación indefinidamente.
+    """
+    from ...services.mercadopago_service import verify_payment
+
+    payment_id = None
+
+    # Formato nuevo (webhooks v2): body JSON {"type": "payment", "data": {"id": "..."}}
+    payload = request.get_json(silent=True) or {}
+    if payload.get("type") == "payment":
+        payment_id = payload.get("data", {}).get("id")
+
+    # Formato viejo (IPN): query params ?topic=payment&id=...
+    if not payment_id and request.args.get("topic") == "payment":
+        payment_id = request.args.get("id")
+
+    # Algunas integraciones mandan data.id directo como query param
+    if not payment_id:
+        payment_id = request.args.get("data.id") or request.args.get("id")
+
+    if not payment_id:
+        # Notificación de otro tipo (merchant_order, etc.) — la ignoramos.
+        current_app.logger.info(f"Webhook MP: notificación ignorada (sin payment_id). Payload: {payload}, args: {dict(request.args)}")
+        return "", 200
+
+    # ✅ Nunca confiamos en el body de la notificación: siempre re-consultamos
+    # el pago real a la API de MP usando el ID recibido.
+    payment = verify_payment(payment_id)
+    if not payment:
+        current_app.logger.warning(f"Webhook MP: no se pudo verificar el pago {payment_id}")
+        return "", 200
+
+    order_id = payment.get("external_reference")
+    if not order_id:
+        current_app.logger.warning(f"Webhook MP: pago {payment_id} sin external_reference")
+        return "", 200
+
+    order = Order.query.get(order_id)
+    if not order:
+        current_app.logger.warning(f"Webhook MP: orden {order_id} no encontrada (pago {payment_id})")
+        return "", 200
+
+    if payment.get("status") == "approved":
+        confirm_order_payment(order, payment)
+
+    return "", 200
 
 
 # ============================================

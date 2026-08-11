@@ -71,6 +71,10 @@ def create_preference(order):
         "payment_methods": {
             "installments": 12,  # hasta 12 cuotas
         },
+        # ✅ NUEVO: le decimos a Mercado Pago dónde avisarnos server-to-server
+        # cuando el estado del pago cambie. Esto es lo que hace que el pedido
+        # se confirme aunque el comprador cierre la pestaña antes de volver.
+        "notification_url": url_for("checkout.mercadopago_webhook", _external=True),
     }
 
     # auto_return solo en producción (en localhost MP no puede redirigir)
