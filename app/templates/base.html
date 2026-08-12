@@ -8,22 +8,7 @@
 
     <!-- Tailwind CSS vía CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        leather: { 50:'#fdf8f3', 100:'#f9ebd9', 700:'#6b3410', 900:'#3d1d08' },
-                        craft:   { 500:'#b87333', 600:'#9a5f28' }
-                    },
-                    fontFamily: {
-                        display: ['"Playfair Display"', 'serif'],
-                        body:    ['Inter', 'sans-serif']
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="{{ url_for('static', filename='js/tailwind.config.js') }}"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -37,11 +22,8 @@
 
     <!-- ✅ CSRF Token para HTMX -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script>
-        document.addEventListener('htmx:configRequest', (event) => {
-            event.detail.headers['X-CSRFToken'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/htmx-config.js') }}"></script>
+
 </head>
 <body class="font-body bg-leather-50 text-leather-900 min-h-screen flex flex-col">
 
@@ -63,7 +45,7 @@
     <!-- ========================================== -->
     <!-- FLASH MESSAGES                             -->
     <!-- ========================================== -->
-     
+
     {% include "partials/flash_messages.html" %}
 
     <!-- ========================================== -->
