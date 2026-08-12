@@ -1,116 +1,131 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-  {% for product in products %}
-  <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition duration-300 group">
-    
-    <!-- ✅ IMAGEN REAL O EMOJI COMO FALLBACK -->
-          <a href="/tienda/producto/{{ product.slug }}" class="block relative overflow-hidden">
+{% for product in products %}
+<div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition duration-300 group">
+    <!-- ✅ IMAGEN CON GALERÍA HOVER -->
+    <a href="/tienda/producto/{{ product.slug }}" class="block relative overflow-hidden aspect-square">
+        <!-- Imagen principal -->
         {% if product.image_url %}
-          <img src="{{ product.image_url }}" alt="{{ product.name }}" 
-               class="w-full h-64 object-cover group-hover:scale-105 transition duration-500">
+        <img src="{{ product.image_url }}" alt="{{ product.name }}"
+             class="w-full h-full object-cover transition-all duration-500 group-hover:opacity-0 group-hover:scale-105">
         {% else %}
-          <div class="h-64 bg-leather-100 flex items-center justify-center text-6xl">
+        <div class="w-full h-full bg-leather-100 flex items-center justify-center text-6xl transition-all duration-500 group-hover:opacity-0">
             {% if product.category.slug == 'billeteras' %}👛
             {% elif product.category.slug == 'bolsos' %}👜
             {% elif product.category.slug == 'cinturones' %}🎗️
             {% else %}👜{% endif %}
-          </div>
-        {% endif %}
-        
-        <!-- ✅ BOTÓN DE FAVORITOS (esquina superior derecha) -->
-        {% if current_user.is_authenticated %}
-        <div class="absolute top-3 right-3 z-10" onclick="event.preventDefault(); event.stopPropagation();">
-          {% include "partials/wishlist_button.html" %}
         </div>
         {% endif %}
-        
+
+        <!-- ✅ Segunda imagen (aparece en hover) -->
+        {% if product.images|length > 0 %}
+        <img src="{{ product.images[0].url }}" alt="{{ product.name }}"
+             class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 scale-105 transition-all duration-500">
+        {% endif %}
+
+        <!-- Botón favoritos -->
+        {% if current_user.is_authenticated %}
+        <div class="absolute top-3 right-3 z-10" onclick="event.preventDefault(); event.stopPropagation();">
+            {% include "partials/wishlist_button.html" %}
+        </div>
+        {% endif %}
+
+        <!-- Badge de descuento -->
         {% if product.compare_at_price %}
         <span class="absolute top-3 left-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">
-          -{{ product.discount_percent }}%
+            -{{ product.discount_percent }}%
         </span>
         {% endif %}
-      </a>
-    
-          <!-- Info -->
-      <div class="p-5">
+
+        <!-- Indicador de galería (puntitos) -->
+        {% if product.images|length > 0 %}
+        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <span class="w-1.5 h-1.5 bg-white rounded-full shadow"></span>
+            <span class="w-1.5 h-1.5 bg-white/60 rounded-full shadow"></span>
+            {% if product.images|length > 1 %}
+            <span class="w-1.5 h-1.5 bg-white/60 rounded-full shadow"></span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </a>
+
+    <!-- Info -->
+    <div class="p-5">
         <p class="text-xs font-semibold text-craft-600 uppercase tracking-wide mb-1">
-          {{ product.category.name }}
+            {{ product.category.name }}
         </p>
         <h3 class="font-display text-lg font-bold text-leather-900 mb-1 group-hover:text-craft-600 transition">
-          <a href="/tienda/producto/{{ product.slug }}">{{ product.name }}</a>
+            <a href="/tienda/producto/{{ product.slug }}">{{ product.name }}</a>
         </h3>
         <p class="text-xs text-gray-500 mb-3">por {{ product.artisan_name or 'Artesano' }}</p>
         <p class="text-sm text-gray-600 mb-4 line-clamp-2">{{ product.short_description or product.description }}</p>
-        
-        <!-- ⭐ Calificación -->
+
+        <!-- Calificación -->
         {% if product.review_count > 0 %}
         <div class="flex items-center gap-1 mb-3">
-          <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-          <span class="text-sm font-semibold text-leather-900">{{ product.average_rating }}</span>
-          <span class="text-xs text-gray-500">({{ product.review_count }} reseñas)</span>
+            <svg class="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+            <span class="text-sm font-semibold text-leather-900">{{ product.average_rating }}</span>
+            <span class="text-xs text-gray-500">({{ product.review_count }} reseñas)</span>
         </div>
         {% endif %}
-        
+
         <div class="flex items-center justify-between">
-          <div>
-            <span class="text-xl font-bold text-leather-900">${{ "%.2f"|format(product.price) }}</span>
-            {% if product.compare_at_price %}
-            <span class="text-sm text-gray-400 line-through ml-2">${{ "%.2f"|format(product.compare_at_price) }}</span>
+            <div>
+                <span class="text-xl font-bold text-leather-900">${{ "%.2f"|format(product.price) }}</span>
+                {% if product.compare_at_price %}
+                <span class="text-sm text-gray-400 line-through ml-2">${{ "%.2f"|format(product.compare_at_price) }}</span>
+                {% endif %}
+            </div>
+            {% if product.in_stock %}
+            <button
+                hx-post="/checkout/agregar/{{ product.id }}"
+                hx-target="#cart-count"
+                hx-swap="outerHTML"
+                class="bg-leather-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-craft-600 transition">
+                Agregar
+            </button>
+            {% else %}
+            <span class="text-sm text-gray-400">Agotado</span>
             {% endif %}
-          </div>
-          
-          {% if product.in_stock %}
-          <button 
-            hx-post="/checkout/agregar/{{ product.id }}"
-            hx-target="#cart-count"
-            hx-swap="outerHTML"
-            class="bg-leather-900 text-white px-4 py-2 rounded-lg text-sm hover:bg-craft-600 transition">
-            Agregar
-          </button>
-          {% else %}
-          <span class="text-sm text-gray-400">Agotado</span>
-          {% endif %}
         </div>
-      </div>
-  </div>
-  {% else %}
-  <div class="col-span-full text-center py-16">
+    </div>
+</div>
+{% else %}
+<div class="col-span-full text-center py-16">
     <p class="text-6xl mb-4">🔍</p>
     <h3 class="font-display text-2xl font-bold text-leather-900 mb-2">No encontramos productos</h3>
     <p class="text-leather-700">Prueba con otros filtros o términos de búsqueda</p>
-  </div>
-  {% endfor %}
+</div>
+{% endfor %}
 </div>
 
 <!-- PAGINACIÓN -->
 {% if pagination.pages > 1 %}
 <div class="flex justify-center gap-2 mt-8">
-  {% if pagination.has_prev %}
-  <a href="/tienda?page={{ pagination.prev_num }}{% if current_category %}&categoria={{ current_category }}{% endif %}{% if search %}&q={{ search }}{% endif %}&sort={{ current_sort }}"
-     class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-    ← Anterior
-  </a>
-  {% endif %}
-  
-  {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
-    {% if p %}
-      {% if p == pagination.page %}
-        <span class="px-4 py-2 bg-craft-600 text-white rounded-lg text-sm font-semibold">{{ p }}</span>
-      {% else %}
-        <a href="/tienda?page={{ p }}{% if current_category %}&categoria={{ current_category }}{% endif %}{% if search %}&q={{ search }}{% endif %}&sort={{ current_sort }}"
-           class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-          {{ p }}
-        </a>
-      {% endif %}
-    {% else %}
-      <span class="px-2 py-2 text-gray-400">...</span>
+    {% if pagination.has_prev %}
+    <a href="/tienda?page={{ pagination.prev_num }}{% if current_category %}&categoria={{ current_category }}{% endif %}{% if search %}&q={{ search }}{% endif %}&sort={{ current_sort }}"
+       class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+        ← Anterior
+    </a>
     {% endif %}
-  {% endfor %}
-  
-  {% if pagination.has_next %}
-  <a href="/tienda?page={{ pagination.next_num }}{% if current_category %}&categoria={{ current_category }}{% endif %}{% if search %}&q={{ search }}{% endif %}&sort={{ current_sort }}"
-     class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
-    Siguiente →
-  </a>
-  {% endif %}
+    {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+    {% if p %}
+    {% if p == pagination.page %}
+    <span class="px-4 py-2 bg-craft-600 text-white rounded-lg text-sm font-semibold">{{ p }}</span>
+    {% else %}
+    <a href="/tienda?page={{ p }}{% if current_category %}&categoria={{ current_category }}{% endif %}{% if search %}&q={{ search }}{% endif %}&sort={{ current_sort }}"
+       class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+        {{ p }}
+    </a>
+    {% endif %}
+    {% else %}
+    <span class="px-2 py-2 text-gray-400">...</span>
+    {% endif %}
+    {% endfor %}
+    {% if pagination.has_next %}
+    <a href="/tienda?page={{ pagination.next_num }}{% if current_category %}&categoria={{ current_category }}{% endif %}{% if search %}&q={{ search }}{% endif %}&sort={{ current_sort }}"
+       class="px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">
+        Siguiente →
+    </a>
+    {% endif %}
 </div>
 {% endif %}

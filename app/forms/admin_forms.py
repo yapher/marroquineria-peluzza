@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileField
 from wtforms import StringField, TextAreaField, FloatField, IntegerField, BooleanField, SelectField, SubmitField
 from wtforms.validators import DataRequired, Length, NumberRange, Optional
 from ..models import Category
@@ -19,17 +19,12 @@ class ProductForm(FlaskForm):
     is_handmade = BooleanField('Hecho a mano', default=True)
     featured = BooleanField('Destacado', default=False)
     active = BooleanField('Activo', default=True)
-    
-    # ✅ Campo de imagen corregido
-    image = FileField('Imagen del producto', validators=[
-        FileAllowed(['jpg', 'jpeg', 'png', 'webp'], 'Solo se permiten imágenes (jpg, jpeg, png, webp)')
-    ])
-    
+    image = FileField('Imagen del producto')
     submit = SubmitField('Guardar')
 
     def __init__(self, *args, **kwargs):
         super(ProductForm, self).__init__(*args, **kwargs)
-        self.category_id.choices = [(c.id, c.name) for c in Category.query.filter_by(active=True).all()]
+        self.category_id.choices = [(c.id, c.name) for c in Category.query.order_by(Category.name).all()]
 
 
 class CategoryForm(FlaskForm):

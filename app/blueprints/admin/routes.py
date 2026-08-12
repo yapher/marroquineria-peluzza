@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from functools import wraps
@@ -5,7 +6,7 @@ from werkzeug.utils import secure_filename
 from slugify import slugify
 from . import admin_bp
 from ...extensions import db
-from ...models import Product, Order, OrderItem, User, Category, Coupon, Review
+from ...models import Product, ProductImage, Order, OrderItem, User, Category, Coupon, Review
 from ...forms.admin_forms import ProductForm, CategoryForm
 from ...forms.coupon_forms import CouponForm
 from datetime import datetime, timedelta
@@ -22,6 +23,69 @@ def admin_required(f):
             return redirect(url_for("main.index"))
         return f(*args, **kwargs)
     return wrapper
+
+
+def _get_bool(field_name):
+    """Lee booleanos del POST. Un checkbox desmarcado NO se envía."""
+    return field_name in request.form
+
+
+def _process_extra_images(files, product, start_position=0):
+    """Sube imágenes adicionales de galería validando cantidad, tamaño y extensión."""
+    from ...services.storage_service import upload_image
+
+    max_images = current_app.config.get("MAX_EXTRA_IMAGES", 8)
+    max_size_mb = current_app.config.get("MAX_IMAGE_SIZE_MB", 5)
+    allowed_ext = current_app.config.get("ALLOWED_EXTENSIONS", {"png", "jpg", "jpeg", "webp"})
+
+    valid_files = [f for f in files if f and f.filename]
+    if not valid_files:
+        return 0
+
+    existing_count = len(product.images)
+    available_slots = max_images - existing_count
+
+    if available_slots <= 0:
+        flash(f"⚠️ Ya tenés {existing_count} imágenes en galería (máximo: {max_images}).", "warning")
+        return 0
+
+    if len(valid_files) > available_slots:
+        flash(f"⚠️ Seleccionaste {len(valid_files)} imágenes, solo quedan {available_slots} lugares. Se subirán las primeras {available_slots}.", "warning")
+        valid_files = valid_files[:available_slots]
+
+    uploaded_count = 0
+    position = start_position
+
+    for extra_file in valid_files:
+        ext = extra_file.filename.rsplit(".", 1)[-1].lower() if "." in extra_file.filename else ""
+        if ext not in allowed_ext:
+            flash(f"⚠️ '{extra_file.filename}' no es formato válido. No se subió.", "warning")
+            continue
+
+        extra_file.seek(0, os.SEEK_END)
+        size_mb = extra_file.tell() / (1024 * 1024)
+        extra_file.seek(0)
+
+        if size_mb > max_size_mb:
+            flash(f"⚠️ '{extra_file.filename}' pesa {size_mb:.1f}MB, supera {max_size_mb}MB. No se subió.", "warning")
+            continue
+
+        try:
+            url = upload_image(extra_file)
+            if url:
+                db.session.add(ProductImage(
+                    url=url, alt=product.name, position=position,
+                    is_primary=False, product_id=product.id,
+                ))
+                position += 1
+                uploaded_count += 1
+            else:
+                flash(f"⚠️ No se pudo subir '{extra_file.filename}'.", "warning")
+        except Exception as e:
+            current_app.logger.error(f"Error subiendo '{extra_file.filename}': {e}")
+            flash(f"⚠️ Error subiendo '{extra_file.filename}'.", "warning")
+
+    return uploaded_count
 
 
 @admin_bp.route("/")
@@ -54,14 +118,19 @@ def product_new():
     form = ProductForm()
     if form.validate_on_submit():
         slug = form.slug.data or slugify(form.name.data)
-        image_url = None
+        image_file = request.files.get('image')
+        extra_files = request.files.getlist('extra_images')
 
-        file = request.files.get('image')
-        if file and file.filename and file.filename != '':
+        image_url = None
+        if image_file and image_file.filename and image_file.filename != '':
             from ...services.storage_service import upload_image
-            image_url = upload_image(file)
+            image_url = upload_image(image_file)
             if not image_url:
-                flash("⚠️ No se pudo subir la imagen. El producto se creará sin imagen.", "warning")
+                flash("⚠️ No se pudo subir la imagen principal.", "warning")
+
+        is_handmade = _get_bool('is_handmade')
+        featured = _get_bool('featured')
+        active = _get_bool('active')
 
         product = Product(
             name=form.name.data,
@@ -74,26 +143,36 @@ def product_new():
             sku=form.sku.data,
             artisan_name=form.artisan_name.data,
             category_id=form.category_id.data,
-            is_handmade=form.is_handmade.data,
-            featured=form.featured.data,
-            active=form.active.data,
+            is_handmade=is_handmade,
+            featured=featured,
+            active=active,
             image_url=image_url
         )
+
         db.session.add(product)
+        db.session.flush()
+
+        extra_count = _process_extra_images(extra_files, product)
         db.session.commit()
 
+        msg = f"✅ Producto '{product.name}' creado"
         if image_url:
-            flash("✅ Producto creado con imagen (guardada en la nube)", "success")
-        else:
-            flash(f"✅ Producto '{product.name}' creado (sin imagen)", "success")
+            msg += " con imagen principal"
+        if extra_count > 0:
+            msg += f" (+{extra_count} imagen(es) en galería)"
+        flash(msg, "success")
         return redirect(url_for("admin.products"))
 
     if form.errors:
         for field, errors in form.errors.items():
             for error in errors:
-                flash(f"Error en {field}: {error}", "error")
-    return render_template("admin/product_form.html", form=form, title="Nuevo Producto")
+                flash(f"❌ Error en '{field}': {error}", "error")
 
+    return render_template(
+        "admin/product_form.html", form=form, title="Nuevo Producto",
+        max_extra_images=current_app.config.get("MAX_EXTRA_IMAGES", 8),
+        max_image_size_mb=current_app.config.get("MAX_IMAGE_SIZE_MB", 5),
+    )
 
 
 @admin_bp.route("/productos/<int:product_id>/editar", methods=["GET", "POST"])
@@ -101,6 +180,7 @@ def product_new():
 def product_edit(product_id):
     product = Product.query.get_or_404(product_id)
     form = ProductForm(obj=product)
+
     if form.validate_on_submit():
         product.name = form.name.data
         product.slug = form.slug.data or slugify(form.name.data)
@@ -112,38 +192,99 @@ def product_edit(product_id):
         product.sku = form.sku.data
         product.artisan_name = form.artisan_name.data
         product.category_id = form.category_id.data
-        product.is_handmade = form.is_handmade.data
-        product.featured = form.featured.data
-        product.active = form.active.data
 
+        product.is_handmade = _get_bool('is_handmade')
+        product.featured = _get_bool('featured')
+        product.active = _get_bool('active')
+
+        # Imagen principal
         file = request.files.get('image')
         if file and file.filename and file.filename != '':
             from ...services.storage_service import upload_image, delete_image
             new_url = upload_image(file)
             if new_url:
-                delete_image(product.image_url)  # borra la anterior si estaba en Cloudinary
+                delete_image(product.image_url)
                 product.image_url = new_url
             else:
                 flash("⚠️ No se pudo subir la nueva imagen", "warning")
 
-        db.session.commit()
-        flash(f"✅ Producto '{product.name}' actualizado", "success")
-        return redirect(url_for("admin.products"))
-    return render_template("admin/product_form.html", form=form, product=product, title="Editar Producto")
+        # Imágenes extra
+        extra_files = request.files.getlist('extra_images')
+        if extra_files:
+            max_position = max([img.position for img in product.images], default=-1)
+            extra_count = _process_extra_images(extra_files, product, start_position=max_position + 1)
+        else:
+            extra_count = 0
 
+        db.session.commit()
+
+        msg = f"✅ Producto '{product.name}' actualizado (activo: {product.active})"
+        if extra_count > 0:
+            msg += f" (+{extra_count} imagen(es) nueva(s))"
+        flash(msg, "success")
+        return redirect(url_for("admin.product_edit", product_id=product.id))
+
+    if request.method == "POST" and form.errors:
+        for field, errors in form.errors.items():
+            for error in errors:
+                flash(f"❌ Error en '{field}': {error}", "error")
+
+    return render_template(
+        "admin/product_form.html", form=form, product=product, title="Editar Producto",
+        max_extra_images=current_app.config.get("MAX_EXTRA_IMAGES", 8),
+        max_image_size_mb=current_app.config.get("MAX_IMAGE_SIZE_MB", 5),
+    )
 
 
 @admin_bp.route("/productos/<int:product_id>/eliminar", methods=["POST"])
 @admin_required
 def product_delete(product_id):
     product = Product.query.get_or_404(product_id)
-    # ✅ Soft-delete: desactivar en vez de borrar físicamente.
-    # Borrarlo rompería wishlists y order_items que lo referencian (error en Postgres).
     product.active = False
     product.featured = False
     db.session.commit()
-    flash(f"✅ Producto '{product.name}' desactivado (ya no aparece en la tienda)", "success")
+    flash(f"✅ Producto '{product.name}' desactivado", "success")
     return redirect(url_for("admin.products"))
+
+
+# ============================================
+# GESTIÓN DE IMÁGENES DE PRODUCTO
+# ============================================
+
+@admin_bp.route("/productos/<int:product_id>/imagenes/<int:image_id>/eliminar", methods=["POST"])
+@admin_required
+def product_image_delete(product_id, image_id):
+    product = Product.query.get_or_404(product_id)
+    image = ProductImage.query.filter_by(id=image_id, product_id=product_id).first_or_404()
+
+    from ...services.storage_service import delete_image
+    delete_image(image.url)
+    db.session.delete(image)
+    db.session.commit()
+    flash("✅ Imagen eliminada de la galería", "success")
+    return redirect(url_for("admin.product_edit", product_id=product.id))
+
+
+@admin_bp.route("/productos/<int:product_id>/imagenes/<int:image_id>/principal", methods=["POST"])
+@admin_required
+def product_image_set_primary(product_id, image_id):
+    """Intercambia la imagen principal con una de la galería."""
+    product = Product.query.get_or_404(product_id)
+    image = ProductImage.query.filter_by(id=image_id, product_id=product_id).first_or_404()
+
+    if not product.image_url:
+        product.image_url = image.url
+        db.session.delete(image)
+        db.session.commit()
+        flash("✅ Imagen establecida como principal", "success")
+        return redirect(url_for("admin.product_edit", product_id=product.id))
+
+    old_primary_url = product.image_url
+    product.image_url = image.url
+    image.url = old_primary_url
+    db.session.commit()
+    flash("✅ Imagen establecida como principal. La anterior pasó a la galería.", "success")
+    return redirect(url_for("admin.product_edit", product_id=product.id))
 
 
 # ============================================
@@ -163,19 +304,16 @@ def category_new():
     form = CategoryForm()
     if form.validate_on_submit():
         slug = form.slug.data or slugify(form.name.data)
-
         category = Category(
             name=form.name.data,
             slug=slug,
             description=form.description.data,
-            active=form.active.data
+            active=_get_bool('active')
         )
         db.session.add(category)
         db.session.commit()
-
-        flash(f"✅ Categoría '{category.name}' creada", "success")
+        flash(f"✅ Categoría '{category.name}' creada (activa: {category.active})", "success")
         return redirect(url_for("admin.categories"))
-
     return render_template("admin/category_form.html", form=form, title="Nueva Categoría")
 
 
@@ -184,17 +322,14 @@ def category_new():
 def category_edit(category_id):
     category = Category.query.get_or_404(category_id)
     form = CategoryForm(obj=category)
-
     if form.validate_on_submit():
         category.name = form.name.data
         category.slug = form.slug.data or slugify(form.name.data)
         category.description = form.description.data
-        category.active = form.active.data
-
+        category.active = _get_bool('active')
         db.session.commit()
-        flash(f"✅ Categoría '{category.name}' actualizada", "success")
+        flash(f"✅ Categoría '{category.name}' actualizada (activa: {category.active})", "success")
         return redirect(url_for("admin.categories"))
-
     return render_template("admin/category_form.html", form=form, category=category, title="Editar Categoría")
 
 
@@ -205,17 +340,11 @@ def category_edit(category_id):
 @admin_bp.route("/pedidos")
 @admin_required
 def orders():
-    # Filtros opcionales
     status_filter = request.args.get("status")
-    
     query = Order.query
-    
     if status_filter and status_filter != "all":
         query = query.filter_by(status=status_filter)
-    
     orders_list = query.order_by(Order.created_at.desc()).all()
-    
-    # Contadores por estado
     stats = {
         "total": Order.query.count(),
         "pending_payment": Order.query.filter_by(status="pending_payment").count(),
@@ -226,11 +355,7 @@ def orders():
         "completed": Order.query.filter_by(status="completed").count(),
         "cancelled": Order.query.filter_by(status="cancelled").count(),
     }
-    
-    return render_template("admin/orders.html", 
-                         orders=orders_list, 
-                         stats=stats,
-                         current_status=status_filter or "all")
+    return render_template("admin/orders.html", orders=orders_list, stats=stats, current_status=status_filter or "all")
 
 
 @admin_bp.route("/pedidos/<int:order_id>")
@@ -264,8 +389,6 @@ def order_change_status(order_id):
         else:
             order.admin_notes = f"[{datetime.utcnow().strftime('%d/%m/%Y %H:%M')}] {notes}"
 
-    # ✅ Si el admin marca como pagado manualmente, replicar lo de confirm_payment:
-    # otorgar puntos, reducir stock e incrementar usos del cupón
     if new_status == "paid" and old_status in ("pending_payment", "pending"):
         if order.user_id:
             user = User.query.get(order.user_id)
@@ -280,7 +403,6 @@ def order_change_status(order_id):
             if coupon:
                 coupon.uses_count += 1
 
-    # ✅ Si se cancela un pedido que ya estaba pagado, restaurar el stock
     if new_status == "cancelled" and old_status in ("paid", "preparing", "shipped"):
         for item in order.items:
             product = Product.query.get(item.product_id)
@@ -319,7 +441,6 @@ def coupon_new():
         if Coupon.query.filter_by(code=form.code.data.upper()).first():
             flash(f"❌ El código '{form.code.data}' ya existe", "error")
             return render_template("admin/coupon_form.html", form=form, title="Nuevo Cupón")
-        
         coupon = Coupon(
             code=form.code.data.upper(),
             discount_type=form.discount_type.data,
@@ -328,14 +449,12 @@ def coupon_new():
             max_uses=form.max_uses.data or 0,
             valid_until=form.valid_until.data,
             description=form.description.data,
-            active=form.active.data
+            active=_get_bool('active')
         )
         db.session.add(coupon)
         db.session.commit()
-        
-        flash(f"✅ Cupón '{coupon.code}' creado exitosamente", "success")
+        flash(f"✅ Cupón '{coupon.code}' creado (activo: {coupon.active})", "success")
         return redirect(url_for("admin.coupons"))
-    
     return render_template("admin/coupon_form.html", form=form, title="Nuevo Cupón")
 
 
@@ -344,13 +463,11 @@ def coupon_new():
 def coupon_edit(coupon_id):
     coupon = Coupon.query.get_or_404(coupon_id)
     form = CouponForm(obj=coupon)
-    
     if form.validate_on_submit():
         existing = Coupon.query.filter_by(code=form.code.data.upper()).first()
         if existing and existing.id != coupon.id:
             flash(f"❌ El código '{form.code.data}' ya existe", "error")
             return render_template("admin/coupon_form.html", form=form, coupon=coupon, title="Editar Cupón")
-        
         coupon.code = form.code.data.upper()
         coupon.discount_type = form.discount_type.data
         coupon.discount_value = form.discount_value.data
@@ -358,12 +475,10 @@ def coupon_edit(coupon_id):
         coupon.max_uses = form.max_uses.data or 0
         coupon.valid_until = form.valid_until.data
         coupon.description = form.description.data
-        coupon.active = form.active.data
-        
+        coupon.active = _get_bool('active')
         db.session.commit()
-        flash(f"✅ Cupón '{coupon.code}' actualizado", "success")
+        flash(f"✅ Cupón '{coupon.code}' actualizado (activo: {coupon.active})", "success")
         return redirect(url_for("admin.coupons"))
-    
     return render_template("admin/coupon_form.html", form=form, coupon=coupon, title="Editar Cupón")
 
 
@@ -378,44 +493,22 @@ def coupon_delete(coupon_id):
 
 
 # ============================================
-# DASHBOARD DE ESTADÍSTICAS
+# ESTADÍSTICAS
 # ============================================
 
 @admin_bp.route("/estadisticas")
 @admin_required
 def stats():
-    """Dashboard avanzado de estadísticas."""
-    
-    # ==========================================
-    # MÉTRICAS GENERALES
-    # ==========================================
-    
-    # Total de pedidos pagados o completados
     completed_orders = Order.query.filter(
         Order.status.in_(["paid", "shipped", "delivered", "completed"])
     ).all()
-    
     total_revenue = sum(float(order.total) for order in completed_orders)
     total_orders = len(completed_orders)
     avg_ticket = total_revenue / total_orders if total_orders > 0 else 0
-    
-    # Pedidos pendientes de pago
-    pending_orders = Order.query.filter(
-        Order.status == "pending_payment"
-    ).count()
-    
-    # Pedidos cancelados
-    cancelled_orders = Order.query.filter(
-        Order.status == "cancelled"
-    ).count()
-    
-    # ==========================================
-    # VENTAS POR MES (Últimos 6 meses)
-    # ==========================================
-    
+    pending_orders = Order.query.filter(Order.status == "pending_payment").count()
+    cancelled_orders = Order.query.filter(Order.status == "cancelled").count()
+
     six_months_ago = datetime.utcnow() - timedelta(days=180)
-    
-    # Agrupar por año y mes
     monthly_data = (
         db.session.query(
             extract('year', Order.created_at).label('year'),
@@ -431,27 +524,16 @@ def stats():
         .order_by('year', 'month')
         .all()
     )
-    
-    # Preparar datos para Chart.js
+
     months_labels = []
     monthly_revenue = []
     monthly_orders_count = []
-    
-    month_names = {
-        1: 'Ene', 2: 'Feb', 3: 'Mar', 4: 'Abr',
-        5: 'May', 6: 'Jun', 7: 'Jul', 8: 'Ago',
-        9: 'Sep', 10: 'Oct', 11: 'Nov', 12: 'Dic'
-    }
-    
+    month_names = {1:'Ene',2:'Feb',3:'Mar',4:'Abr',5:'May',6:'Jun',7:'Jul',8:'Ago',9:'Sep',10:'Oct',11:'Nov',12:'Dic'}
     for row in monthly_data:
         months_labels.append(f"{month_names.get(int(row.month), 'Mes')} {int(row.year)}")
         monthly_revenue.append(float(row.total_sales or 0))
         monthly_orders_count.append(int(row.order_count or 0))
-    
-    # ==========================================
-    # TOP 5 PRODUCTOS MÁS VENDIDOS
-    # ==========================================
-    
+
     top_products = (
         db.session.query(
             OrderItem.product_name,
@@ -465,11 +547,7 @@ def stats():
         .limit(5)
         .all()
     )
-    
-    # ==========================================
-    # INGRESOS POR CATEGORÍA
-    # ==========================================
-    
+
     revenue_by_category = (
         db.session.query(
             Category.name.label('category_name'),
@@ -484,46 +562,22 @@ def stats():
         .order_by(func.sum(OrderItem.price * OrderItem.quantity).desc())
         .all()
     )
-    
-    # Preparar datos para gráfico de categorías
     category_labels = [row.category_name for row in revenue_by_category]
     category_revenue = [float(row.total_revenue or 0) for row in revenue_by_category]
-    
-    # ==========================================
-    # DISTRIBUCIÓN DE ESTADOS
-    # ==========================================
-    
+
     status_distribution = (
-        db.session.query(
-            Order.status,
-            func.count(Order.id).label('count')
-        )
+        db.session.query(Order.status, func.count(Order.id).label('count'))
         .group_by(Order.status)
         .all()
     )
-    
-    # Convertir a diccionario
     status_map = {
-        "pending_payment": "Pago Pendiente",
-        "pending": "Pendiente",
-        "paid": "Pagado",
-        "preparing": "En Preparación",
-        "shipped": "Enviado",
-        "delivered": "Entregado",
-        "completed": "Completado",
-        "cancelled": "Cancelado"
+        "pending_payment": "Pago Pendiente", "pending": "Pendiente", "paid": "Pagado",
+        "preparing": "En Preparación", "shipped": "Enviado", "delivered": "Entregado",
+        "completed": "Completado", "cancelled": "Cancelado"
     }
-    
-    status_labels = []
-    status_counts = []
-    for status, count in status_distribution:
-        status_labels.append(status_map.get(status, status))
-        status_counts.append(count)
-    
-    # ==========================================
-    # CLIENTES Y RESEÑAS
-    # ==========================================
-    
+    status_labels = [status_map.get(s, s) for s, _ in status_distribution]
+    status_counts = [c for _, c in status_distribution]
+
     total_customers = User.query.filter_by(is_admin=False).count()
     total_reviews = Review.query.filter_by(approved=True).count()
     avg_rating = (
@@ -531,85 +585,53 @@ def stats():
         .filter(Review.approved == True)
         .scalar() or 0
     )
-    
+
     return render_template(
         "admin/stats.html",
-        # Métricas generales
-        total_revenue=total_revenue,
-        total_orders=total_orders,
-        avg_ticket=avg_ticket,
-        pending_orders=pending_orders,
-        cancelled_orders=cancelled_orders,
-        # Gráficos
-        months_labels=months_labels,
-        monthly_revenue=monthly_revenue,
-        monthly_orders_count=monthly_orders_count,
-        # Productos
-        top_products=top_products,
-        # Categorías
-        category_labels=category_labels,
-        category_revenue=category_revenue,
-        # Estados
-        status_labels=status_labels,
-        status_counts=status_counts,
-        # Clientes y reseñas
-        total_customers=total_customers,
-        total_reviews=total_reviews,
+        total_revenue=total_revenue, total_orders=total_orders, avg_ticket=avg_ticket,
+        pending_orders=pending_orders, cancelled_orders=cancelled_orders,
+        months_labels=months_labels, monthly_revenue=monthly_revenue,
+        monthly_orders_count=monthly_orders_count, top_products=top_products,
+        category_labels=category_labels, category_revenue=category_revenue,
+        status_labels=status_labels, status_counts=status_counts,
+        total_customers=total_customers, total_reviews=total_reviews,
         avg_rating=round(float(avg_rating), 1),
     )
 
+
 # ============================================
-# MODERACIÓN DE RESEÑAS
+# RESEÑAS
 # ============================================
 
 @admin_bp.route("/reseñas")
 @admin_required
 def reviews():
-    """Lista todas las reseñas con filtros."""
-    from ...models import Review
-    
-    # Filtros
     status_filter = request.args.get("status", "pending")
-    
     query = Review.query.join(User).join(Product)
-    
     if status_filter == "pending":
         query = query.filter(Review.approved == False)
     elif status_filter == "approved":
         query = query.filter(Review.approved == True)
-    
     reviews_list = query.order_by(Review.created_at.desc()).all()
-    
-    # Contadores
     stats = {
         "total": Review.query.count(),
         "pending": Review.query.filter_by(approved=False).count(),
         "approved": Review.query.filter_by(approved=True).count(),
     }
-    
-    return render_template("admin/reviews.html", 
-                         reviews=reviews_list, 
-                         stats=stats,
-                         current_status=status_filter)
+    return render_template("admin/reviews.html", reviews=reviews_list, stats=stats, current_status=status_filter)
 
 
 @admin_bp.route("/reseñas/<int:review_id>/aprobar", methods=["POST"])
 @admin_required
 def approve_review(review_id):
-    """Aprueba una reseña."""
-    from ...models import Review
-    
     review = Review.query.get_or_404(review_id)
     review.approved = True
     db.session.commit()
-    
-    # Enviar notificación al usuario (opcional)
     try:
         from ...services.email_service import send_review_approved
         send_review_approved(review)
     except Exception as e:
-        current_app.logger.error(f"Error enviando email de aprobación: {e}")
-    
+        current_app.logger.error(f"Error enviando email: {e}")
     flash(f"✅ Reseña de {review.user.first_name} aprobada", "success")
     return redirect(url_for("admin.reviews", status=request.args.get("status", "pending")))
 
@@ -617,15 +639,10 @@ def approve_review(review_id):
 @admin_bp.route("/reseñas/<int:review_id>/rechazar", methods=["POST"])
 @admin_required
 def reject_review(review_id):
-    """Rechaza y elimina una reseña."""
-    from ...models import Review
-    
     review = Review.query.get_or_404(review_id)
     user_name = review.user.first_name
     product_name = review.product.name
-    
     db.session.delete(review)
     db.session.commit()
-    
-    flash(f"❌ Reseña de {user_name} para {product_name} rechazada y eliminada", "warning")
+    flash(f"❌ Reseña de {user_name} para {product_name} rechazada", "warning")
     return redirect(url_for("admin.reviews", status=request.args.get("status", "pending")))

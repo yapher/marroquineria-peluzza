@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, flash, redirect, request, url_for
 from .extensions import db, migrate, login_manager, csrf, mail, cache
 
 
@@ -22,6 +22,15 @@ def create_app(config_name='development'):
     login_manager.login_message = 'Por favor, inicia sesión para acceder a esta página.'
     login_manager.login_message_category = 'info'
 
+    @app.errorhandler(413)
+    def request_entity_too_large(e):
+        max_mb = app.config.get("MAX_CONTENT_LENGTH", 0) // (1024 * 1024)
+        flash(
+            f"Los archivos superan el límite de {max_mb} MB en total.",
+            "error",
+        )
+        return redirect(request.referrer or url_for("admin.products"))
+
     from .blueprints.main import main_bp
     from .blueprints.shop import shop_bp
     from .blueprints.auth import auth_bp
@@ -42,7 +51,6 @@ def create_app(config_name='development'):
     def load_user(user_id):
         return User.query.get(int(user_id))
 
-    # ✅ Context Processor — UNA sola instancia de Cart
     @app.context_processor
     def inject_globals():
         from .services.cart_service import Cart
