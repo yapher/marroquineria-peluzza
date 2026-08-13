@@ -1,20 +1,16 @@
 {% extends "base.html" %}
-
 {% block title %}{{ product.name }} | Marroquinería Artesanal{% endblock %}
 {% block meta_description %}{{ (product.short_description or product.description[:155] ~ '...')|striptags }}{% endblock %}
 {% block meta_keywords %}{{ product.category.name }}, {{ product.name }}, cuero artesanal, hecho a mano, {{ product.artisan_name or 'artesanal' }}{% endblock %}
 {% block canonical_url %}{{ url_for('shop.product_detail', slug=product.slug, _external=True) }}{% endblock %}
-
 {% block og_type %}product{% endblock %}
 {% block og_title %}{{ product.name }} | Marroquinería Artesanal{% endblock %}
 {% block og_description %}{{ (product.short_description or product.description[:155] ~ '...')|striptags }}{% endblock %}
 {% block og_url %}{{ url_for('shop.product_detail', slug=product.slug, _external=True) }}{% endblock %}
 {% block og_image %}{{ product.image_url or url_for('static', filename='img/logo-og.png', _external=True) }}{% endblock %}
-
 {% block twitter_title %}{{ self.og_title() }}{% endblock %}
 {% block twitter_description %}{{ self.og_description() }}{% endblock %}
 {% block twitter_image %}{{ self.og_image() }}{% endblock %}
-
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 py-8">
     <!-- Breadcrumb -->
@@ -32,6 +28,8 @@
             <div class="relative aspect-square rounded-2xl overflow-hidden bg-leather-100 mb-4">
                 {% if product.image_url or product.images|length > 0 %}
                 <template x-for="(img, index) in images" :key="index">
+                    <!-- ✅ La primera imagen NO tiene lazy loading (above the fold)
+                         Las demás SÍ tienen lazy loading -->
                     <img x-show="current === index"
                          x-transition:enter="transition ease-out duration-300"
                          x-transition:enter-start="opacity-0 scale-95"
@@ -41,6 +39,7 @@
                          x-transition:leave-end="opacity-0"
                          :src="img.url"
                          :alt="img.alt || '{{ product.name }}'"
+                         :loading="index === 0 ? 'eager' : 'lazy'"
                          class="absolute inset-0 w-full h-full object-cover">
                 </template>
 
@@ -84,10 +83,13 @@
             <template x-if="images.length > 1">
                 <div class="flex gap-2 overflow-x-auto pb-2">
                     <template x-for="(img, index) in images" :key="index">
+                        <!-- ✅ Thumbnails con lazy loading (no son above the fold) -->
                         <button @click="current = index"
                                 :class="current === index ? 'ring-2 ring-craft-600 opacity-100' : 'opacity-60 hover:opacity-100'"
                                 class="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition">
-                            <img :src="img.url" :alt="img.alt || '{{ product.name }}'" class="w-full h-full object-cover">
+                            <img :src="img.url" :alt="img.alt || '{{ product.name }}'" 
+                                 loading="lazy"
+                                 class="w-full h-full object-cover">
                         </button>
                     </template>
                 </div>
@@ -171,8 +173,6 @@
             <!-- ✅ COMPARTIR EN REDES SOCIALES -->
             {% include "partials/share_buttons.html" %}
 
-            <!-- Características -->
-            <div class="mt-8 pt-8 border-t border-gray-200 grid grid-cols-3 gap-4 text-center">
             <!-- Características -->
             <div class="mt-8 pt-8 border-t border-gray-200 grid grid-cols-3 gap-4 text-center">
                 <div>
@@ -344,8 +344,9 @@
             {% for p in related %}
             <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition group flex flex-col">
                 <a href="/tienda/producto/{{ p.slug }}" class="block relative overflow-hidden">
+                    <!-- ✅ Lazy loading en productos relacionados (están al final de la página) -->
                     {% if p.image_url %}
-                    <img src="{{ p.image_url }}" alt="{{ p.name }}" class="w-full h-48 object-cover group-hover:scale-105 transition duration-500">
+                    <img src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy" class="w-full h-48 object-cover group-hover:scale-105 transition duration-500">
                     {% else %}
                     <div class="h-48 bg-leather-100 flex items-center justify-center text-5xl">
                         {% if p.category.slug == 'billeteras' %}👛
@@ -388,7 +389,6 @@ function productGallery() {
         current: 0,
         images: [],
         init() {
-            // Construir array de imágenes: primero la principal, luego las de la galería
             {% if product.image_url %}
             this.images.push({
                 url: "{{ product.image_url }}",

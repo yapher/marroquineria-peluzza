@@ -3,10 +3,10 @@
 <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-xl transition duration-300 group">
     <!-- ✅ IMAGEN CON EFECTO HOVER DE GALERÍA -->
     <a href="/tienda/producto/{{ product.slug }}" class="block relative overflow-hidden">
-        
         <!-- 1. Imagen Principal (se desvanece al hacer hover) -->
         {% if product.image_url %}
         <img src="{{ product.image_url }}" alt="{{ product.name }}"
+             loading="lazy"
              class="w-full h-64 object-cover group-hover:opacity-0 transition duration-500">
         {% else %}
         <div class="w-full h-64 bg-leather-100 flex items-center justify-center text-6xl group-hover:opacity-0 transition duration-500">
@@ -20,8 +20,8 @@
         <!-- 2. ✅ Imagen Secundaria (aparece al hacer hover) -->
         {% if product.images and product.images|length > 0 %}
         <img src="{{ product.images[0].url }}" alt="{{ product.name }}"
+             loading="lazy"
              class="absolute inset-0 w-full h-64 object-cover opacity-0 group-hover:opacity-100 transition duration-500">
-        
         <!-- Indicador de puntos (estilo carrusel) -->
         <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition duration-500">
             <span class="w-1.5 h-1.5 bg-white rounded-full shadow-sm"></span>
