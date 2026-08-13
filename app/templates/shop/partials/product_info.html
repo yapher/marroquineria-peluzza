@@ -58,25 +58,44 @@
     <!-- SKU -->
     <p class="text-xs text-gray-500 mb-4 sm:mb-6">SKU: {{ product.sku }}</p>
 
-    <!-- Botón Agregar -->
-    {% if product.in_stock %}
-    <form hx-post="/checkout/agregar/{{ product.id }}" hx-target="#cart-count" hx-swap="outerHTML"
-          class="flex flex-col sm:flex-row gap-3">
-        <div class="flex items-center border border-gray-300 rounded-lg self-start sm:self-auto">
-            <button type="button" onclick="this.nextElementSibling.stepDown()" class="px-3 sm:px-4 py-2.5 sm:py-2 hover:bg-gray-100 text-lg">−</button>
-            <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}"
-                   class="w-14 sm:w-16 text-center py-2 border-x border-gray-300 text-base">
-            <button type="button" onclick="this.previousElementSibling.stepUp()" class="px-3 sm:px-4 py-2.5 sm:py-2 hover:bg-gray-100 text-lg">+</button>
-        </div>
-        <button type="submit"
-                class="flex-1 bg-leather-900 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:bg-craft-600 transition text-base">
-            🛒 Agregar al carrito
+    <!-- ========================================== -->
+    <!-- BOTÓN AGREGAR (Solo usuarios logueados)  -->
+    <!-- ========================================== -->
+    {% if current_user.is_authenticated %}
+        {% if product.in_stock %}
+        <form hx-post="/checkout/agregar/{{ product.id }}" hx-target="#cart-count" hx-swap="outerHTML"
+              class="flex flex-col sm:flex-row gap-3">
+            <div class="flex items-center border border-gray-300 rounded-lg self-start sm:self-auto">
+                <button type="button" onclick="this.nextElementSibling.stepDown()" class="px-3 sm:px-4 py-2.5 sm:py-2 hover:bg-gray-100 text-lg">−</button>
+                <input type="number" name="quantity" value="1" min="1" max="{{ product.stock }}"
+                       class="w-14 sm:w-16 text-center py-2 border-x border-gray-300 text-base">
+                <button type="button" onclick="this.previousElementSibling.stepUp()" class="px-3 sm:px-4 py-2.5 sm:py-2 hover:bg-gray-100 text-lg">+</button>
+            </div>
+            <button type="submit"
+                    class="flex-1 bg-leather-900 text-white font-semibold py-3 px-6 sm:px-8 rounded-lg hover:bg-craft-600 transition text-base">
+                🛒 Agregar al carrito
+            </button>
+        </form>
+        {% else %}
+        <button disabled class="w-full bg-gray-300 text-gray-500 font-semibold py-3 px-8 rounded-lg cursor-not-allowed">
+            Producto agotado
         </button>
-    </form>
+        {% endif %}
     {% else %}
-    <button disabled class="w-full bg-gray-300 text-gray-500 font-semibold py-3 px-8 rounded-lg cursor-not-allowed">
-        Producto agotado
-    </button>
+        <!-- No logueado: invitar a registrarse -->
+        <div class="bg-leather-50 border border-leather-200 rounded-xl p-4 sm:p-6 text-center">
+            <p class="text-sm sm:text-base text-leather-700 mb-3">
+                🔒 Para comprar necesitas tener una cuenta
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2 justify-center">
+                <a href="/auth/login" class="bg-leather-900 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-craft-600 transition text-sm">
+                    Iniciar Sesión
+                </a>
+                <a href="/auth/registro" class="bg-craft-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-craft-500 transition text-sm">
+                    Crear Cuenta
+                </a>
+            </div>
+        </div>
     {% endif %}
 
     <!-- Compartir en redes -->

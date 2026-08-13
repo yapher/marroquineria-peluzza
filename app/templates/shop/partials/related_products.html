@@ -6,7 +6,6 @@
     <h2 class="font-display text-xl sm:text-2xl font-bold text-leather-900 mb-1 sm:mb-2">También te puede interesar</h2>
     <p class="text-leather-700 text-sm sm:text-base mb-4 sm:mb-6">Piezas que combinan con tu selección</p>
 
-    <!-- 2 col móvil, 4 col desktop -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         {% for p in related %}
         <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition group flex flex-col">
@@ -28,15 +27,22 @@
                     <a href="/tienda/producto/{{ p.slug }}">{{ p.name }}</a>
                 </h3>
                 <p class="text-craft-600 font-bold text-sm sm:text-base mt-auto mb-2 sm:mb-3">${{ "%.2f"|format(p.price) }}</p>
-                {% if p.in_stock %}
-                <button hx-post="/checkout/agregar/{{ p.id }}"
-                        hx-target="#cart-count"
-                        hx-swap="outerHTML"
-                        class="w-full bg-leather-900 text-white text-[10px] sm:text-sm py-1.5 sm:py-2 rounded-lg hover:bg-craft-600 transition">
-                    Agregar
-                </button>
+
+                {% if current_user.is_authenticated %}
+                    {% if p.in_stock %}
+                    <button hx-post="/checkout/agregar/{{ p.id }}"
+                            hx-target="#cart-count"
+                            hx-swap="outerHTML"
+                            class="w-full bg-leather-900 text-white text-[10px] sm:text-sm py-1.5 sm:py-2 rounded-lg hover:bg-craft-600 transition">
+                        Agregar
+                    </button>
+                    {% else %}
+                    <span class="w-full text-center bg-gray-100 text-gray-500 text-[10px] sm:text-sm py-1.5 sm:py-2 rounded-lg">Agotado</span>
+                    {% endif %}
                 {% else %}
-                <span class="w-full text-center bg-gray-100 text-gray-500 text-[10px] sm:text-sm py-1.5 sm:py-2 rounded-lg">Agotado</span>
+                    <a href="/auth/login" class="w-full text-center text-craft-600 hover:underline text-[10px] sm:text-sm py-1.5 sm:py-2">
+                        Inicia sesión
+                    </a>
                 {% endif %}
             </div>
         </div>

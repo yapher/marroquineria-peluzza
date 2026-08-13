@@ -23,7 +23,6 @@
         <p class="text-leather-700 mt-2 text-sm sm:text-base">Lo más elegido por nuestros clientes</p>
     </div>
 
-    <!-- 1 col móvil, 2 col tablet, 4 col desktop -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
         {% for product in featured_products %}
         <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition duration-300 group">
@@ -47,12 +46,19 @@
                 <p class="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2">{{ product.short_description or product.description }}</p>
                 <div class="flex items-center justify-between gap-2">
                     <span class="text-lg sm:text-xl font-bold text-leather-900">${{ "%.2f"|format(product.price) }}</span>
+
+                    {% if current_user.is_authenticated %}
                     <button hx-post="/checkout/agregar/{{ product.id }}"
                             hx-target="#cart-count"
                             hx-swap="outerHTML"
                             class="bg-leather-900 text-white px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm hover:bg-craft-600 transition">
                         Agregar
                     </button>
+                    {% else %}
+                    <a href="/auth/login" class="text-xs sm:text-sm text-craft-600 hover:underline">
+                        Inicia sesión
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>

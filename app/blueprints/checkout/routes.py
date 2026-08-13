@@ -3,9 +3,11 @@
 Rutas del flujo de compra.
 Cada ruta delega la lógica de negocio a los servicios
 y solo maneja la capa HTTP (request/response).
+
+⚠️ Todas las rutas del carrito y checkout requieren login.
 """
 from flask import render_template, request, flash, redirect, url_for, session, current_app
-from flask_login import current_user
+from flask_login import current_user, login_required
 from . import checkout_bp
 from ...services.cart_service import Cart
 from ...services.checkout_service import validate_cart_stock, create_order, cleanup_failed_order
@@ -20,7 +22,7 @@ from ...config.constants import OrderStatus, DEFAULT_SHIPPING_COST
 
 
 # ============================================
-# CARRITO
+# CARRITO (requiere login)
 # ============================================
 
 @checkout_bp.route("/test")
@@ -29,12 +31,14 @@ def test_route():
 
 
 @checkout_bp.route("/carrito")
+@login_required
 def view_cart():
     cart = Cart()
     return render_template("checkout/cart.html", cart=cart)
 
 
 @checkout_bp.route("/carrito/count")
+@login_required
 def cart_count():
     cart = Cart()
     return render_template("partials/cart_count.html", count=cart.total_items)
@@ -42,6 +46,7 @@ def cart_count():
 
 @csrf.exempt
 @checkout_bp.route("/agregar/<int:product_id>", methods=["POST"])
+@login_required
 def add_to_cart(product_id):
     product = Product.query.get_or_404(product_id)
     quantity = request.form.get("quantity", 1, type=int)
@@ -58,6 +63,7 @@ def add_to_cart(product_id):
 
 @csrf.exempt
 @checkout_bp.route("/carrito/update", methods=["POST"])
+@login_required
 def update_cart():
     product_id = request.form.get("product_id")
     quantity = request.form.get("quantity", type=int)
@@ -68,6 +74,7 @@ def update_cart():
 
 @csrf.exempt
 @checkout_bp.route("/carrito/remove/<int:product_id>", methods=["POST"])
+@login_required
 def remove_from_cart(product_id):
     cart = Cart()
     cart.remove(product_id)
@@ -80,10 +87,11 @@ def remove_from_cart(product_id):
 
 
 # ============================================
-# CHECKOUT
+# CHECKOUT (requiere login)
 # ============================================
 
 @checkout_bp.route("/checkout")
+@login_required
 def checkout_page():
     cart = Cart()
     if cart.total_items == 0:
@@ -111,10 +119,11 @@ def checkout_page():
 
 
 # ============================================
-# CUPONES
+# CUPONES (requiere login)
 # ============================================
 
 @checkout_bp.route("/aplicar-cupon", methods=["POST"])
+@login_required
 def apply_coupon():
     code = request.form.get("code", "").strip().upper()
     cart = Cart()
@@ -130,6 +139,7 @@ def apply_coupon():
 
 
 @checkout_bp.route("/quitar-cupon")
+@login_required
 def remove_coupon():
     session.pop("coupon_code", None)
     flash("Cupón removido", "info")
@@ -137,10 +147,11 @@ def remove_coupon():
 
 
 # ============================================
-# PROCESAR PEDIDO → MERCADO PAGO
+# PROCESAR PEDIDO → MERCADO PAGO (requiere login)
 # ============================================
 
 @checkout_bp.route("/checkout/procesar", methods=["POST"])
+@login_required
 def process_checkout():
     """Crea la orden y redirige al Checkout Pro de Mercado Pago."""
     cart = Cart()
@@ -188,7 +199,7 @@ def process_checkout():
 
 
 # ============================================
-# RETORNO DESDE MERCADO PAGO
+# RETORNO DESDE MERCADO PAGO (sin login_required, MP redirige acá)
 # ============================================
 
 @checkout_bp.route("/pago/retorno/<int:order_id>")
@@ -200,7 +211,6 @@ def payment_return(order_id):
     if not payment_id:
         return redirect(url_for("checkout.payment_failure", order_id=order.id))
 
-    # ✅ VALIDAR el pago con la API de MP (nunca confiar solo en la URL)
     payment = verify_payment(payment_id)
 
     if payment and payment.get("status") == "approved":
@@ -306,6 +316,7 @@ def payment_failure(order_id):
 
 
 @checkout_bp.route("/pago/reintentar/<int:order_id>", methods=["POST"])
+@login_required
 def retry_payment(order_id):
     """Reintenta el pago de un pedido pendiente."""
     order = Order.query.get_or_404(order_id)
@@ -323,6 +334,7 @@ def retry_payment(order_id):
 
 
 @checkout_bp.route("/pago/cancelado")
+@login_required
 def payment_cancel():
     """Cancela el pedido pendiente. El carrito queda intacto."""
     order_id = session.get("pending_order_id")
