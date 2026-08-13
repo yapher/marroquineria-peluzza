@@ -1,0 +1,46 @@
+<!-- ========================================== -->
+<!-- PRODUCTOS RELACIONADOS                     -->
+<!-- ========================================== -->
+{% if related %}
+<section class="mt-16 border-t border-gray-200 pt-12">
+    <h2 class="font-display text-2xl font-bold text-leather-900 mb-2">También te puede interesar</h2>
+    <p class="text-leather-700 mb-6">Piezas que combinan perfectamente con tu selección</p>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {% for p in related %}
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-lg transition group flex flex-col">
+            <a href="/tienda/producto/{{ p.slug }}" class="block relative overflow-hidden">
+                {% if p.image_url %}
+                <img src="{{ p.image_url }}" alt="{{ p.name }}" loading="lazy" class="w-full h-48 object-cover group-hover:scale-105 transition duration-500">
+                {% else %}
+                <div class="h-48 bg-leather-100 flex items-center justify-center text-5xl">
+                    {% if p.category.slug == 'billeteras' %}👛
+                    {% elif p.category.slug == 'bolsos' %}👜
+                    {% elif p.category.slug == 'cinturones' %}🎗️
+                    {% else %}👜{% endif %}
+                </div>
+                {% endif %}
+            </a>
+            <div class="p-4 flex flex-col flex-1">
+                <h3 class="font-semibold text-leather-900 group-hover:text-craft-600 transition text-sm line-clamp-2 mb-1">
+                    <a href="/tienda/producto/{{ p.slug }}">{{ p.name }}</a>
+                </h3>
+                <p class="text-craft-600 font-bold mt-auto mb-3">${{ "%.2f"|format(p.price) }}</p>
+                {% if p.in_stock %}
+                <button
+                    hx-post="/checkout/agregar/{{ p.id }}"
+                    hx-target="#cart-count"
+                    hx-swap="outerHTML"
+                    hx-indicator="#spinner-{{ p.id }}"
+                    class="w-full bg-leather-900 text-white text-sm py-2 rounded-lg hover:bg-craft-600 transition flex items-center justify-center gap-2">
+                    <span id="spinner-{{ p.id }}" class="htmx-indicator hidden">⏳</span>
+                    <span>Agregar</span>
+                </button>
+                {% else %}
+                <span class="w-full text-center bg-gray-100 text-gray-500 text-sm py-2 rounded-lg cursor-not-allowed">Agotado</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
