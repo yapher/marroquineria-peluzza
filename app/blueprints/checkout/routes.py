@@ -70,12 +70,14 @@ def checkout_page():
     if current_user.is_authenticated:
         form.email.data = current_user.email
         form.name.data = current_user.full_name
+    
     coupon_code = session.get("coupon_code")
     coupon_discount = Decimal("0")
     if coupon_code:
         coupon = Coupon.query.filter_by(code=coupon_code).first()
         if coupon and coupon.is_valid:
             coupon_discount = coupon.apply_discount(cart.total_price)
+
     # Calcular descuento por nivel
     level_discount = Decimal("0")
     if current_user.is_authenticated:
@@ -83,6 +85,7 @@ def checkout_page():
         if discount_percent > 0:
             base_for_level = cart.total_price - coupon_discount
             level_discount = base_for_level * Decimal(discount_percent) / Decimal("100")
+
     shipping_cost = Decimal("10.00")
     return render_template("checkout/checkout.html",
                            cart=cart,
@@ -98,6 +101,7 @@ def apply_coupon():
     if not code:
         flash("Ingresa un código de cupón", "error")
         return redirect(url_for("checkout.checkout_page"))
+    
     coupon = Coupon.query.filter_by(code=code).first()
     if not coupon:
         flash("❌ Cupón no encontrado", "error")
@@ -105,10 +109,12 @@ def apply_coupon():
     if not coupon.is_valid:
         flash("❌ Este cupón ya no es válido", "error")
         return redirect(url_for("checkout.checkout_page"))
+    
     cart = Cart()
     if cart.total_price < coupon.min_purchase:
         flash(f"❌ Compra mínima requerida: ${coupon.min_purchase}", "error")
         return redirect(url_for("checkout.checkout_page"))
+    
     session["coupon_code"] = code
     flash(f"✅ Cupón '{code}' aplicado exitosamente", "success")
     return redirect(url_for("checkout.checkout_page"))
@@ -195,7 +201,15 @@ def process_checkout():
             price=product.price
         )
         db.session.add(order_item)
+    
     db.session.commit()
+
+    # ✅ ENVIAR NOTIFICACIÓN AL ADMIN (Nuevo)
+    try:
+        from ...services.email_service import send_admin_new_order_notification
+        send_admin_new_order_notification(order)
+    except Exception as e:
+        current_app.logger.error(f"❌ Error enviando email al admin: {e}")
 
     # ✅ Crear preferencia de pago en Mercado Pago
     from ...services.mercadopago_service import create_preference
@@ -241,11 +255,6 @@ def _confirm_order_payment(order, payment):
     Confirma el pago delegando al servicio centralizado (order_service),
     y si fue el servicio quien efectivamente confirmó el pago ahora,
     limpia el carrito y las cookies de sesión del comprador.
-
-    Esta función existe como wrapper porque el carrito/sesión solo tienen
-    sentido acá (retorno del comprador, con su navegador activo) — el
-    webhook de MP no tiene sesión del comprador, así que llama directo
-    a confirm_order_payment().
     """
     was_confirmed = confirm_order_payment(order, payment)
     if not was_confirmed:
@@ -268,38 +277,24 @@ def _confirm_order_payment(order, payment):
 def mercadopago_webhook():
     """
     Recibe notificaciones de Mercado Pago cuando cambia el estado de un pago.
-    A diferencia de payment_return, esto llega directo desde los servidores
-    de MP sin depender de que el comprador vuelva al sitio, así que es la
-    fuente de verdad real para confirmar pagos (evita pedidos que quedan
-    colgados en pending_payment si el usuario cierra la pestaña).
-
-    Siempre responde 200 rápido, incluso ante datos inválidos, para que
-    Mercado Pago no reintente esta notificación indefinidamente.
+    Siempre responde 200 rápido, incluso ante datos inválidos.
     """
     from ...services.mercadopago_service import verify_payment
 
     payment_id = None
-
-    # Formato nuevo (webhooks v2): body JSON {"type": "payment", "data": {"id": "..."}}
     payload = request.get_json(silent=True) or {}
+    
     if payload.get("type") == "payment":
         payment_id = payload.get("data", {}).get("id")
-
-    # Formato viejo (IPN): query params ?topic=payment&id=...
     if not payment_id and request.args.get("topic") == "payment":
         payment_id = request.args.get("id")
-
-    # Algunas integraciones mandan data.id directo como query param
     if not payment_id:
         payment_id = request.args.get("data.id") or request.args.get("id")
 
     if not payment_id:
-        # Notificación de otro tipo (merchant_order, etc.) — la ignoramos.
-        current_app.logger.info(f"Webhook MP: notificación ignorada (sin payment_id). Payload: {payload}, args: {dict(request.args)}")
+        current_app.logger.info(f"Webhook MP: notificación ignorada (sin payment_id).")
         return "", 200
 
-    # ✅ Nunca confiamos en el body de la notificación: siempre re-consultamos
-    # el pago real a la API de MP usando el ID recibido.
     payment = verify_payment(payment_id)
     if not payment:
         current_app.logger.warning(f"Webhook MP: no se pudo verificar el pago {payment_id}")
@@ -349,6 +344,7 @@ def retry_payment(order_id):
     if order.status != "pending_payment":
         flash("Este pedido ya fue procesado", "warning")
         return redirect(url_for("checkout.payment_success", order_id=order.id))
+    
     from ...services.mercadopago_service import create_preference
     preference = create_preference(order)
     if not preference:

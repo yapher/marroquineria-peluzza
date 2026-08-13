@@ -3,7 +3,6 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
-
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -26,6 +25,9 @@ class Config:
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
     MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", "Marroquinería Artesanal <marroquineriapeluzza@gmail.com>")
+    
+    # ✅ Email del administrador para recibir alertas de nuevos pedidos
+    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", os.getenv("MAIL_USERNAME", "marroquineriapeluzza@gmail.com"))
 
     # Cloudinary
     CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
@@ -46,6 +48,7 @@ class ProductionConfig(Config):
         db_url = db_url.replace("postgres://", "postgresql+psycopg://", 1)
     elif db_url and db_url.startswith("postgresql://"):
         db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    
     SQLALCHEMY_DATABASE_URI = db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
