@@ -1,14 +1,21 @@
 # app/blueprints/checkout/routes.py
+"""
+Rutas del flujo de compra.
+Cada ruta delega la lógica de negocio a los servicios
+y solo maneja la capa HTTP (request/response).
+"""
 from flask import render_template, request, flash, redirect, url_for, session, current_app
 from flask_login import current_user
-from decimal import Decimal
 from . import checkout_bp
 from ...services.cart_service import Cart
-from ...models import Product, Order, OrderItem, Coupon, User
+from ...services.checkout_service import validate_cart_stock, create_order, cleanup_failed_order
+from ...services.discount_calculator import calculate_all_discounts, validate_coupon
+from ...services.mercadopago_service import create_preference, verify_payment
+from ...services.order_service import confirm_order_payment
+from ...services.email_service import send_admin_new_order_notification
+from ...models import Product, Order
 from ...forms.checkout_forms import CheckoutForm
 from ...extensions import db, csrf
-from ...services.loyalty_service import award_points_for_order
-from ...services.order_service import confirm_order_payment
 from ...config.constants import OrderStatus, DEFAULT_SHIPPING_COST
 
 
@@ -89,52 +96,32 @@ def checkout_page():
         form.name.data = current_user.full_name
 
     coupon_code = session.get("coupon_code")
-    coupon_discount = Decimal("0")
+    user = current_user if current_user.is_authenticated else None
+    discounts = calculate_all_discounts(cart.total_price, coupon_code, user)
 
-    if coupon_code:
-        coupon = Coupon.query.filter_by(code=coupon_code).first()
-        if coupon and coupon.is_valid:
-            coupon_discount = coupon.apply_discount(cart.total_price)
+    return render_template(
+        "checkout/checkout.html",
+        cart=cart,
+        form=form,
+        coupon_code=coupon_code,
+        coupon_discount=discounts["coupon_discount"],
+        level_discount=discounts["level_discount"],
+        shipping_cost=discounts["shipping_cost"],
+    )
 
-    # Calcular descuento por nivel
-    level_discount = Decimal("0")
-    if current_user.is_authenticated:
-        discount_percent = current_user.loyalty_discount
-        if discount_percent > 0:
-            base_for_level = cart.total_price - coupon_discount
-            level_discount = base_for_level * Decimal(discount_percent) / Decimal("100")
 
-    shipping_cost = DEFAULT_SHIPPING_COST
-
-    return render_template("checkout/checkout.html",
-                           cart=cart,
-                           form=form,
-                           coupon_code=coupon_code,
-                           coupon_discount=coupon_discount,
-                           level_discount=level_discount,
-                           shipping_cost=shipping_cost)
-
+# ============================================
+# CUPONES
+# ============================================
 
 @checkout_bp.route("/aplicar-cupon", methods=["POST"])
 def apply_coupon():
     code = request.form.get("code", "").strip().upper()
-
-    if not code:
-        flash("Ingresa un código de cupón", "error")
-        return redirect(url_for("checkout.checkout_page"))
-
-    coupon = Coupon.query.filter_by(code=code).first()
-    if not coupon:
-        flash("❌ Cupón no encontrado", "error")
-        return redirect(url_for("checkout.checkout_page"))
-
-    if not coupon.is_valid:
-        flash("❌ Este cupón ya no es válido", "error")
-        return redirect(url_for("checkout.checkout_page"))
-
     cart = Cart()
-    if cart.total_price < coupon.min_purchase:
-        flash(f"❌ Compra mínima requerida: ${coupon.min_purchase}", "error")
+
+    valid, message = validate_coupon(code, cart.total_price)
+    if not valid:
+        flash(message, "error")
         return redirect(url_for("checkout.checkout_page"))
 
     session["coupon_code"] = code
@@ -166,83 +153,31 @@ def process_checkout():
         flash("Por favor completa todos los campos requeridos", "error")
         return redirect(url_for("checkout.checkout_page"))
 
-    # ✅ Validar stock antes de crear la orden
-    for item in cart.items:
-        product = item["product"]
-        if product.stock < item["quantity"]:
-            flash(f"❌ Stock insuficiente de '{product.name}' (quedan {product.stock} unidades).", "error")
-            return redirect(url_for("checkout.view_cart"))
+    # 1. Validar stock
+    valid, product_name = validate_cart_stock(cart)
+    if not valid:
+        flash(f"❌ Stock insuficiente de '{product_name}'.", "error")
+        return redirect(url_for("checkout.view_cart"))
 
-    subtotal = cart.total_price
-    shipping_cost = DEFAULT_SHIPPING_COST
-
-    coupon_code = None
-    coupon_discount = Decimal("0")
-    if "coupon_code" in session:
-        coupon = Coupon.query.filter_by(code=session["coupon_code"]).first()
-        if coupon and coupon.is_valid:
-            coupon_code = coupon.code
-            coupon_discount = coupon.apply_discount(subtotal)
-
-    # Descuento por nivel de fidelización
-    level_discount = Decimal("0")
-    if current_user.is_authenticated:
-        discount_percent = current_user.loyalty_discount
-        if discount_percent > 0:
-            base_for_level = subtotal - coupon_discount
-            level_discount = base_for_level * Decimal(discount_percent) / Decimal("100")
-
-    total = subtotal + shipping_cost - coupon_discount - level_discount
-
-    order = Order(
-        user_id=current_user.id if current_user.is_authenticated else None,
-        customer_email=form.email.data,
-        customer_name=form.name.data,
-        customer_phone=form.phone.data,
-        shipping_address=form.address.data,
-        shipping_city=form.city.data,
-        shipping_state=form.state.data,
-        shipping_zip=form.zip_code.data,
-        shipping_country=form.country.data,
-        subtotal=subtotal,
-        shipping_cost=shipping_cost,
-        total=total,
-        coupon_code=coupon_code,
-        coupon_discount=coupon_discount,
-        level_discount=level_discount,
-        status=OrderStatus.PENDING_PAYMENT,
-        notes=form.notes.data
+    # 2. Crear orden (delegado al servicio)
+    user = current_user if current_user.is_authenticated else None
+    order = create_order(
+        cart=cart,
+        form_data=form.data,
+        user=user,
+        coupon_code=session.get("coupon_code"),
     )
-    db.session.add(order)
-    db.session.flush()
 
-    for item in cart.items:
-        product = item["product"]
-        order_item = OrderItem(
-            order_id=order.id,
-            product_id=product.id,
-            product_name=product.name,
-            product_sku=product.sku,
-            quantity=item["quantity"],
-            price=product.price
-        )
-        db.session.add(order_item)
-
-    db.session.commit()
-
-    # ✅ ENVIAR NOTIFICACIÓN AL ADMIN
+    # 3. Notificar al admin (best effort)
     try:
-        from ...services.email_service import send_admin_new_order_notification
         send_admin_new_order_notification(order)
     except Exception as e:
         current_app.logger.error(f"❌ Error enviando email al admin: {e}")
 
-    # ✅ Crear preferencia de pago en Mercado Pago
-    from ...services.mercadopago_service import create_preference
+    # 4. Crear preferencia de pago en Mercado Pago
     preference = create_preference(order)
     if not preference:
-        db.session.delete(order)
-        db.session.commit()
+        cleanup_failed_order(order)
         flash("❌ Hubo un error al conectar con Mercado Pago. Intentá de nuevo.", "error")
         return redirect(url_for("checkout.checkout_page"))
 
@@ -266,7 +201,6 @@ def payment_return(order_id):
         return redirect(url_for("checkout.payment_failure", order_id=order.id))
 
     # ✅ VALIDAR el pago con la API de MP (nunca confiar solo en la URL)
-    from ...services.mercadopago_service import verify_payment
     payment = verify_payment(payment_id)
 
     if payment and payment.get("status") == "approved":
@@ -309,8 +243,6 @@ def mercadopago_webhook():
     Recibe notificaciones de Mercado Pago cuando cambia el estado de un pago.
     Siempre responde 200 rápido, incluso ante datos inválidos.
     """
-    from ...services.mercadopago_service import verify_payment
-
     payment_id = None
     payload = request.get_json(silent=True) or {}
 
@@ -324,7 +256,7 @@ def mercadopago_webhook():
         payment_id = request.args.get("data.id") or request.args.get("id")
 
     if not payment_id:
-        current_app.logger.info(f"Webhook MP: notificación ignorada (sin payment_id).")
+        current_app.logger.info("Webhook MP: notificación ignorada (sin payment_id).")
         return "", 200
 
     payment = verify_payment(payment_id)
@@ -382,7 +314,6 @@ def retry_payment(order_id):
         flash("Este pedido ya fue procesado", "warning")
         return redirect(url_for("checkout.payment_success", order_id=order.id))
 
-    from ...services.mercadopago_service import create_preference
     preference = create_preference(order)
     if not preference:
         flash("❌ Error al conectar con Mercado Pago", "error")
@@ -399,8 +330,7 @@ def payment_cancel():
     if order_id:
         order = Order.query.get(order_id)
         if order and order.status == OrderStatus.PENDING_PAYMENT:
-            db.session.delete(order)
-            db.session.commit()
+            cleanup_failed_order(order)
 
     session.pop("pending_order_id", None)
     flash("Pedido cancelado. Tu carrito sigue intacto.", "info")
