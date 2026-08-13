@@ -4,16 +4,15 @@
 <div x-data="productGallery()"
      x-init="init()"
      data-images='[
-        {% if product.image_url %}
-        {"url": "{{ product.image_url }}", "alt": "{{ product.name }}"}{% if product.images|length > 0 %},{% endif %}
-        {% endif %}
-        {% for img in product.images|sort(attribute='position') %}
-        {"url": "{{ img.url }}", "alt": "{{ img.alt or product.name }}"}{% if not loop.last %},{% endif %}
-        {% endfor %}
-     ]'>
-
+{% if product.image_url %}
+{"url": "{{ product.image_url }}", "alt": "{{ product.name }}"}{% if product.images|length > 0 %},{% endif %}
+{% endif %}
+{% for img in product.images|sort(attribute='position') %}
+{"url": "{{ img.url }}", "alt": "{{ img.alt or product.name }}"}{% if not loop.last %},{% endif %}
+{% endfor %}
+]'>
     <!-- Imagen principal con transición -->
-    <div class="relative aspect-square rounded-2xl overflow-hidden bg-leather-100 mb-4">
+    <div class="relative aspect-square rounded-2xl overflow-hidden bg-leather-100 mb-4 group">
         {% if product.image_url or product.images|length > 0 %}
         <template x-for="(img, index) in images" :key="index">
             <!-- La primera imagen NO tiene lazy loading (above the fold) -->
@@ -30,31 +29,32 @@
                  class="absolute inset-0 w-full h-full object-cover">
         </template>
 
-        <!-- Botones de navegación -->
+        <!-- Botones de navegación (siempre visibles) -->
         <template x-if="images.length > 1">
             <div>
                 <!-- Flecha izquierda -->
                 <button @click="prev()"
-                        class="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition opacity-0 group-hover:opacity-100 focus:opacity-100">
-                    <svg class="w-5 h-5 text-leather-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                        class="absolute left-3 top-1/2 -translate-y-1/2 w-12 h-12 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </button>
 
                 <!-- Flecha derecha -->
                 <button @click="next()"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/90 hover:bg-white rounded-full shadow-lg flex items-center justify-center transition opacity-0 group-hover:opacity-100 focus:opacity-100">
-                    <svg class="w-5 h-5 text-leather-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        class="absolute right-3 top-1/2 -translate-y-1/2 w-12 h-12 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-xl flex items-center justify-center transition-all duration-200 hover:scale-110 z-10">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
                     </svg>
                 </button>
 
                 <!-- Contador de imágenes -->
-                <div class="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full font-semibold">
+                <div class="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-3 py-1.5 rounded-full font-semibold backdrop-blur-sm z-10">
                     <span x-text="(current + 1) + ' / ' + images.length"></span>
                 </div>
             </div>
         </template>
+
         {% else %}
         <!-- Placeholder si no hay imágenes -->
         <div class="w-full h-full flex items-center justify-center text-9xl">
@@ -68,11 +68,11 @@
 
     <!-- Thumbnails clickeables -->
     <template x-if="images.length > 1">
-        <div class="flex gap-2 overflow-x-auto pb-2">
+        <div class="flex gap-2 overflow-x-auto pb-2 snap-x">
             <template x-for="(img, index) in images" :key="index">
                 <button @click="current = index"
-                        :class="current === index ? 'ring-2 ring-craft-600 opacity-100' : 'opacity-60 hover:opacity-100'"
-                        class="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden transition">
+                        :class="current === index ? 'ring-2 ring-red-600 ring-offset-2 opacity-100 scale-105' : 'opacity-60 hover:opacity-100'"
+                        class="flex-shrink-0 w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden transition-all duration-200 snap-start">
                     <img :src="img.url" :alt="img.alt" loading="lazy" class="w-full h-full object-cover">
                 </button>
             </template>
