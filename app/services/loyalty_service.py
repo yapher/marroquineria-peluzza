@@ -1,5 +1,7 @@
+# app/services/loyalty_service.py
 from decimal import Decimal
 from flask import flash
+from ..config.constants import POINTS_PER_DOLLAR, LOYALTY_LEVELS_WITH_DISCOUNT
 
 
 def calculate_points_from_order(order) -> int:
@@ -9,7 +11,7 @@ def calculate_points_from_order(order) -> int:
     """
     # Usar el total de la orden (incluye envío, excluye descuentos)
     total = float(order.total)
-    points = int(total // 10)
+    points = int(total // POINTS_PER_DOLLAR)
     return points
 
 
@@ -20,23 +22,22 @@ def award_points_for_order(order, user):
     """
     if not user:
         return
-    
+
     # Calcular puntos
     points = calculate_points_from_order(order)
-    
     if points <= 0:
         return
-    
+
     # Agregar puntos
     leveled_up = user.add_points(
         points=points,
         reason=f"Compra #{order.id} - ${order.total}",
         order_id=order.id
     )
-    
+
     # Actualizar total gastado
     user.total_spent = (user.total_spent or Decimal("0")) + order.total
-    
+
     # Mensaje flash
     if leveled_up:
         flash(f"🎉 ¡Ganaste {points} puntos y subiste a {user.loyalty_level_display}!", "success")
@@ -46,4 +47,4 @@ def award_points_for_order(order, user):
 
 def can_use_level_discount(user) -> bool:
     """Verifica si el usuario puede usar el descuento por nivel."""
-    return user.loyalty_level in ["silver", "gold", "platinum"]
+    return user.loyalty_level in LOYALTY_LEVELS_WITH_DISCOUNT

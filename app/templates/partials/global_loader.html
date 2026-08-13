@@ -1,0 +1,12 @@
+{# ============================================
+   LOADING GLOBAL - Progress bar + Spinner
+   ============================================ #}
+
+{# Barra de progreso superior (estilo YouTube) #}
+<div id="progress-bar"></div>
+
+{# Overlay de carga global con spinner #}
+<div id="global-loader" x-data="{ message: 'Cargando...' }">
+    <div class="loader-spinner"></div>
+    <p class="loader-text" x-text="message">Cargando...</p>
+</div>

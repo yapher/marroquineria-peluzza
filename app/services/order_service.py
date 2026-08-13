@@ -9,6 +9,7 @@ o si el usuario llega a confirmar por las dos vías).
 from flask import current_app
 from ..extensions import db
 from ..models import Product, Coupon, User
+from ..config.constants import OrderStatus
 
 
 def confirm_order_payment(order, payment_data: dict) -> bool:
@@ -20,13 +21,13 @@ def confirm_order_payment(order, payment_data: dict) -> bool:
     orden ya estaba confirmada (para que el caller sepa si debe hacer
     tareas adicionales, como limpiar el carrito de la sesión).
     """
-    if order.status != "pending_payment":
+    if order.status != OrderStatus.PENDING_PAYMENT:
         current_app.logger.info(
             f"Orden #{order.id} ya estaba en estado '{order.status}', se ignora confirmación duplicada."
         )
         return False
 
-    order.status = "paid"
+    order.status = OrderStatus.PAID
     order.payment_method = "mercadopago"
     order.payment_status = payment_data.get("status", "approved")
     order.payment_id = str(payment_data.get("id", ""))

@@ -1,8 +1,10 @@
+# app/blueprints/admin/routes/stats.py
 """Rutas de estadísticas y reportes."""
 from flask import render_template
 from .. import admin_bp
 from ....models import Order, OrderItem, Product, Category, User, Review
 from ....extensions import db
+from ....config.constants import COMPLETED_ORDER_STATUSES, OrderStatus, get_order_status_meta
 from . import admin_required
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
@@ -12,18 +14,18 @@ from sqlalchemy import func, extract
 @admin_required
 def stats():
     """Panel de estadísticas con gráficos."""
+
     # Pedidos completados
     completed_orders = Order.query.filter(
-        Order.status.in_(["paid", "shipped", "delivered", "completed"])
+        Order.status.in_(COMPLETED_ORDER_STATUSES)
     ).all()
-    
+
     total_revenue = sum(float(order.total) for order in completed_orders)
     total_orders = len(completed_orders)
     avg_ticket = total_revenue / total_orders if total_orders > 0 else 0
-    
-    pending_orders = Order.query.filter(Order.status == "pending_payment").count()
-    cancelled_orders = Order.query.filter(Order.status == "cancelled").count()
-    
+    pending_orders = Order.query.filter(Order.status == OrderStatus.PENDING_PAYMENT).count()
+    cancelled_orders = Order.query.filter(Order.status == OrderStatus.CANCELLED).count()
+
     # Ventas mensuales (últimos 6 meses)
     six_months_ago = datetime.utcnow() - timedelta(days=180)
     monthly_data = (
@@ -34,24 +36,24 @@ def stats():
             func.count(Order.id).label('order_count')
         )
         .filter(
-            Order.status.in_(["paid", "shipped", "delivered", "completed"]),
+            Order.status.in_(COMPLETED_ORDER_STATUSES),
             Order.created_at >= six_months_ago
         )
         .group_by('year', 'month')
         .order_by('year', 'month')
         .all()
     )
-    
+
     months_labels = []
     monthly_revenue = []
     monthly_orders_count = []
     month_names = {1:'Ene',2:'Feb',3:'Mar',4:'Abr',5:'May',6:'Jun',7:'Jul',8:'Ago',9:'Sep',10:'Oct',11:'Nov',12:'Dic'}
-    
+
     for row in monthly_data:
         months_labels.append(f"{month_names.get(int(row.month), 'Mes')} {int(row.year)}")
         monthly_revenue.append(float(row.total_sales or 0))
         monthly_orders_count.append(int(row.order_count or 0))
-    
+
     # Top productos
     top_products = (
         db.session.query(
@@ -60,13 +62,13 @@ def stats():
             func.sum(OrderItem.price * OrderItem.quantity).label('total_revenue')
         )
         .join(Order)
-        .filter(Order.status.in_(["paid", "shipped", "delivered", "completed"]))
+        .filter(Order.status.in_(COMPLETED_ORDER_STATUSES))
         .group_by(OrderItem.product_name)
         .order_by(func.sum(OrderItem.quantity).desc())
         .limit(5)
         .all()
     )
-    
+
     # Ingresos por categoría
     revenue_by_category = (
         db.session.query(
@@ -77,30 +79,24 @@ def stats():
         .join(Product, Product.id == OrderItem.product_id)
         .join(Category, Category.id == Product.category_id)
         .join(Order, Order.id == OrderItem.order_id)
-        .filter(Order.status.in_(["paid", "shipped", "delivered", "completed"]))
+        .filter(Order.status.in_(COMPLETED_ORDER_STATUSES))
         .group_by(Category.name)
         .order_by(func.sum(OrderItem.price * OrderItem.quantity).desc())
         .all()
     )
-    
+
     category_labels = [row.category_name for row in revenue_by_category]
     category_revenue = [float(row.total_revenue or 0) for row in revenue_by_category]
-    
+
     # Distribución de estados
     status_distribution = (
         db.session.query(Order.status, func.count(Order.id).label('count'))
         .group_by(Order.status)
         .all()
     )
-    
-    status_map = {
-        "pending_payment": "Pago Pendiente", "pending": "Pendiente", "paid": "Pagado",
-        "preparing": "En Preparación", "shipped": "Enviado", "delivered": "Entregado",
-        "completed": "Completado", "cancelled": "Cancelado"
-    }
-    status_labels = [status_map.get(s, s) for s, _ in status_distribution]
+    status_labels = [get_order_status_meta(s)["label"] for s, _ in status_distribution]
     status_counts = [c for _, c in status_distribution]
-    
+
     # Reseñas
     total_customers = User.query.filter_by(is_admin=False).count()
     total_reviews = Review.query.filter_by(approved=True).count()
@@ -109,7 +105,7 @@ def stats():
         .filter(Review.approved == True)
         .scalar() or 0
     )
-    
+
     return render_template(
         "admin/stats.html",
         total_revenue=total_revenue, total_orders=total_orders, avg_ticket=avg_ticket,
