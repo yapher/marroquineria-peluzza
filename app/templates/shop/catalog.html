@@ -1,33 +1,46 @@
 {% extends "base.html" %}
 {% block title %}Tienda | Marroquinería Artesanal{% endblock %}
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 py-8">
-    <!-- HEADER DE LA PÁGINA -->
-    <div class="mb-8">
-        <h1 class="font-display text-4xl font-bold text-leather-900">Nuestra Tienda</h1>
-        <p class="text-leather-700 mt-2">Descubre piezas únicas hechas a mano por artesanos locales</p>
+<div class="max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+
+    <!-- HEADER -->
+    <div class="mb-4 sm:mb-8">
+        <h1 class="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-leather-900">Nuestra Tienda</h1>
+        <p class="text-leather-700 mt-1 sm:mt-2 text-sm sm:text-base">Descubre piezas únicas hechas a mano</p>
     </div>
 
-    <div class="flex flex-col lg:flex-row gap-8">
-        <!-- SIDEBAR DE FILTROS (partial) -->
-        {% include "shop/partials/filters_sidebar.html" %}
+    <!-- Botón para mostrar filtros en móvil -->
+    <div class="lg:hidden mb-4" x-data="{ showFilters: false }">
+        <button @click="showFilters = !showFilters"
+                class="w-full flex items-center justify-between bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm font-semibold text-leather-900 hover:border-craft-600 transition">
+            <span>🔍 Filtros y búsqueda</span>
+            <svg class="w-5 h-5 transition-transform" :class="{ 'rotate-180': showFilters }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+        </button>
+        <div x-show="showFilters" x-collapse class="mt-3">
+            {% include "shop/partials/filters_sidebar.html" %}
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
+
+        <!-- SIDEBAR DE FILTROS (solo desktop) -->
+        <div class="hidden lg:block">
+            {% include "shop/partials/filters_sidebar.html" %}
+        </div>
 
         <!-- GRILLA DE PRODUCTOS -->
         <div class="flex-1">
-            <!-- Barra de ordenamiento y resultados -->
-            <div class="flex items-center justify-between mb-6 bg-white rounded-xl shadow-sm p-4">
+            <!-- Barra de ordenamiento -->
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 bg-white rounded-xl shadow-sm p-3 sm:p-4 gap-2">
                 <p class="text-sm text-leather-700">
-                    <span class="font-semibold">{{ pagination.total }}</span> producto{{ 's' if pagination.total != 1 }} encontrado{{ 's' if pagination.total != 1 }}
+                    <span class="font-semibold">{{ pagination.total }}</span> producto{{ 's' if pagination.total != 1 }}
                 </p>
-                <div class="flex items-center gap-2">
-                    <label class="text-sm text-leather-700">Ordenar:</label>
-                    <select
-                        hx-get="/tienda"
-                        hx-target="#product-grid"
-                        hx-trigger="change"
-                        name="sort"
-                        class="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-craft-600"
-                    >
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <label class="text-sm text-leather-700 flex-shrink-0">Ordenar:</label>
+                    <select hx-get="/tienda" hx-target="#product-grid" hx-trigger="change" name="sort"
+                            class="flex-1 sm:flex-none px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-craft-600">
                         <option value="recent" {% if current_sort == 'recent' %}selected{% endif %}>Más recientes</option>
                         <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Precio: menor a mayor</option>
                         <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Precio: mayor a menor</option>
@@ -36,7 +49,7 @@
                 </div>
             </div>
 
-            <!-- Grid de productos (HTMX target) -->
+            <!-- Grid de productos -->
             <div id="product-grid">
                 {% include "shop/partials/product_grid.html" %}
             </div>

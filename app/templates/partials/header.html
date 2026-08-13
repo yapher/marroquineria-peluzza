@@ -1,17 +1,17 @@
 <!-- ========================================== -->
-<!-- HEADER                                     -->
+<!-- HEADER - Mobile First                      -->
 <!-- ========================================== -->
 <header class="bg-white shadow-sm sticky top-0 z-40">
-    <nav class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+    <nav class="max-w-7xl mx-auto px-3 sm:px-4 py-3 flex items-center justify-between gap-2 sm:gap-4">
 
         <!-- 1. LOGO -->
-        <a href="/" class="font-display text-xl md:text-2xl text-leather-900 font-bold flex-shrink-0">
-            👜 Marroquinería
+        <a href="/" class="font-display text-lg sm:text-xl md:text-2xl text-leather-900 font-bold flex-shrink-0">
+            👐 Marroquinería
         </a>
 
-        <!-- 2. NAVEGACIÓN CENTRAL (Desktop) -->
+        <!-- 2. NAVEGACIÓN CENTRAL (Desktop only) -->
         <div class="hidden lg:flex items-center gap-8 text-sm font-medium text-leather-700">
-            <!-- ✅ TIENDA CON SUBMENÚ -->
+            <!-- TIENDA CON SUBMENÚ -->
             <div class="relative group" x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false">
                 <button class="flex items-center gap-1 hover:text-craft-600 transition">
                     Tienda
@@ -50,9 +50,9 @@
         </div>
 
         <!-- 3. ACCIONES DERECHA -->
-        <div class="flex items-center gap-3 md:gap-5">
+        <div class="flex items-center gap-2 sm:gap-3 md:gap-5">
 
-            <!-- A. Búsqueda (Desktop) -->
+            <!-- A. Búsqueda (Desktop only) -->
             <div class="relative hidden md:block w-40 lg:w-56">
                 <form hx-get="/tienda/buscar"
                       hx-target="#search-results"
@@ -78,14 +78,14 @@
             {% endif %}
 
             <!-- C. Carrito -->
-            <a href="/checkout/carrito" class="relative text-leather-700 hover:text-craft-600 transition" title="Carrito de compras">
+            <a href="/checkout/carrito" class="relative text-leather-700 hover:text-craft-600 transition p-1" title="Carrito de compras">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
-                <span id="cart-count" class="absolute -top-2 -right-2 bg-craft-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                <span id="cart-count" class="absolute -top-1 -right-1 bg-craft-600 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
                     {{ cart_count }}
                 </span>
             </a>
 
-            <!-- D. Menú de Usuario (Desktop) -->
+            <!-- D. Menú de Usuario (Desktop only) -->
             {% if current_user.is_authenticated %}
             <div class="relative group hidden xl:block">
                 <button class="flex items-center gap-2 text-leather-700 hover:text-craft-600 transition">

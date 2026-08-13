@@ -1,89 +1,102 @@
 {% extends "base.html" %}
 {% block title %}Checkout | Marroquinería Artesanal{% endblock %}
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-8">
-    <h1 class="font-display text-4xl font-bold text-leather-900 mb-8">Finalizar Compra</h1>
-    <div class="grid lg:grid-cols-3 gap-8">
+<div class="max-w-6xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+    <h1 class="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-leather-900 mb-4 sm:mb-8">
+        Finalizar Compra
+    </h1>
+
+    <!-- 1 col en móvil, 3 col en desktop -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+
         <!-- FORMULARIO -->
         <div class="lg:col-span-2">
-            <form method="POST" action="/checkout/checkout/procesar" class="bg-white rounded-xl shadow-sm p-8 space-y-6">
+            <form method="POST" action="/checkout/checkout/procesar" class="bg-white rounded-xl shadow-sm p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
                 {{ form.hidden_tag() }}
+
                 <div>
-                    <h2 class="font-display text-2xl font-bold text-leather-900 mb-4">Datos de Contacto</h2>
+                    <h2 class="font-display text-xl sm:text-2xl font-bold text-leather-900 mb-4">Datos de Contacto</h2>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-semibold text-leather-900 mb-2">Email</label>
-                            {{ form.email(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="tu@email.com") }}
+                            {{ form.email(class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="tu@email.com") }}
                             {% for error in form.email.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-leather-900 mb-2">Nombre completo</label>
-                            {{ form.name(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="Juan Pérez") }}
+                            {{ form.name(class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="Juan Pérez") }}
                             {% for error in form.name.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-leather-900 mb-2">Teléfono</label>
-                            {{ form.phone(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="+54 11 1234-5678") }}
+                            {{ form.phone(class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="+54 11 1234-5678") }}
                         </div>
                     </div>
                 </div>
+
                 <div>
-                    <h2 class="font-display text-2xl font-bold text-leather-900 mb-4">Dirección de Envío</h2>
+                    <h2 class="font-display text-xl sm:text-2xl font-bold text-leather-900 mb-4">Dirección de Envío</h2>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-semibold text-leather-900 mb-2">Dirección</label>
-                            {{ form.address(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="Av. Siempre Viva 123, Depto 4B") }}
+                            {{ form.address(class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="Av. Siempre Viva 123, Depto 4B") }}
                             {% for error in form.address.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-leather-900 mb-2">Ciudad</label>
-                                {{ form.city(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="Buenos Aires") }}
+                                {{ form.city(class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="Buenos Aires") }}
                                 {% for error in form.city.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-leather-900 mb-2">Código Postal</label>
-                                {{ form.zip_code(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="1414") }}
+                                {{ form.zip_code(class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="1414") }}
                                 {% for error in form.zip_code.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-sm font-semibold text-leather-900 mb-2">Provincia/Estado</label>
-                                {{ form.state(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="CABA") }}
+                                {{ form.state(class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", placeholder="CABA") }}
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold text-leather-900 mb-2">País</label>
-                                {{ form.country(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", value="Argentina") }}
+                                {{ form.country(class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600", value="Argentina") }}
                                 {% for error in form.country.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
                             </div>
                         </div>
                     </div>
                 </div>
+
                 <div>
                     <label class="block text-sm font-semibold text-leather-900 mb-2">Notas del pedido (opcional)</label>
-                    {{ form.notes(class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600 h-20", placeholder="Instrucciones especiales de entrega, horario preferido, etc.") }}
+                    {{ form.notes(class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600 h-20", placeholder="Instrucciones especiales de entrega...") }}
                 </div>
-                <button type="submit" class="w-full bg-craft-600 text-white font-semibold py-4 rounded-lg hover:bg-craft-500 transition text-lg">
+
+                <button type="submit"
+                        class="w-full bg-craft-600 text-white font-semibold py-3.5 sm:py-4 rounded-lg hover:bg-craft-500 transition text-base sm:text-lg">
                     💳 Pagar con Mercado Pago
                 </button>
             </form>
         </div>
+
         <!-- RESUMEN DEL PEDIDO -->
         <div class="lg:col-span-1">
-            <div class="bg-white rounded-xl shadow-sm p-6 sticky top-24">
-                <h2 class="font-display text-2xl font-bold text-leather-900 mb-4">Resumen del Pedido</h2>
-                <div class="space-y-3 mb-6">
+            <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 lg:sticky lg:top-24">
+                <h2 class="font-display text-xl sm:text-2xl font-bold text-leather-900 mb-4">Resumen</h2>
+
+                <div class="space-y-3 mb-4 sm:mb-6">
                     {% for item in cart.items %}
-                    <div class="flex justify-between text-sm">
-                        <div>
-                            <p class="font-semibold text-leather-900">{{ item.product.name }}</p>
-                            <p class="text-gray-500">Cantidad: {{ item.quantity }}</p>
+                    <div class="flex justify-between text-sm gap-2">
+                        <div class="min-w-0">
+                            <p class="font-semibold text-leather-900 truncate">{{ item.product.name }}</p>
+                            <p class="text-gray-500">Cant: {{ item.quantity }}</p>
                         </div>
-                        <p class="font-semibold text-leather-900">${{ "%.2f"|format(item.subtotal) }}</p>
+                        <p class="font-semibold text-leather-900 flex-shrink-0">${{ "%.2f"|format(item.subtotal) }}</p>
                     </div>
                     {% endfor %}
                 </div>
+
                 <div class="border-t border-gray-200 pt-4 space-y-2">
                     <div class="flex justify-between text-sm">
                         <span class="text-leather-700">Subtotal</span>
@@ -101,7 +114,7 @@
                     {% endif %}
                     {% if level_discount > 0 %}
                     <div class="flex justify-between text-sm text-green-600">
-                        <span>Descuento fidelización ({{ current_user.loyalty_level_display }})</span>
+                        <span>Descuento fidelización</span>
                         <span class="font-semibold">-${{ "%.2f"|format(level_discount) }}</span>
                     </div>
                     {% endif %}
@@ -110,28 +123,30 @@
                         <span class="text-craft-600">${{ "%.2f"|format(cart.total_price + shipping_cost - coupon_discount - level_discount) }}</span>
                     </div>
                 </div>
+
                 <!-- Campo de cupón -->
-                <div class="mt-6 pt-6 border-t border-gray-200">
+                <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
                     {% if coupon_code %}
-                    <div class="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3">
-                        <div>
-                            <p class="text-sm font-semibold text-green-800">✓ Cupón aplicado: <code class="font-mono">{{ coupon_code }}</code></p>
-                            <p class="text-xs text-green-600">Descuento: -${{ "%.2f"|format(coupon_discount) }}</p>
+                    <div class="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg p-3 gap-2">
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-green-800 truncate">✓ {{ coupon_code }}</p>
+                            <p class="text-xs text-green-600">-${{ "%.2f"|format(coupon_discount) }}</p>
                         </div>
-                        <a href="/checkout/quitar-cupon" class="text-red-600 hover:underline text-sm">Quitar</a>
+                        <a href="/checkout/quitar-cupon" class="text-red-600 hover:underline text-sm flex-shrink-0">Quitar</a>
                     </div>
                     {% else %}
                     <form method="POST" action="/checkout/aplicar-cupon" class="flex gap-2">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <input type="text" name="code" placeholder="Código de cupón"
-                               class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm uppercase" required>
-                        <button type="submit" class="px-4 py-2 bg-leather-900 text-white rounded-lg text-sm hover:bg-craft-600 transition">
+                        <input type="text" name="code" placeholder="Cupón"
+                               class="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg text-sm uppercase" required>
+                        <button type="submit" class="px-3 sm:px-4 py-2 bg-leather-900 text-white rounded-lg text-sm hover:bg-craft-600 transition flex-shrink-0">
                             Aplicar
                         </button>
                     </form>
                     {% endif %}
                 </div>
-                <div class="mt-6 pt-6 border-t border-gray-200">
+
+                <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
                     <p class="text-xs text-gray-500 text-center">
                         🔒 Pago seguro con Mercado Pago<br>
                         Tus datos están protegidos

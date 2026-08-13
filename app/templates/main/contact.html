@@ -1,152 +1,101 @@
 {% extends "base.html" %}
-
 {% block title %}Contacto | Marroquinería Artesanal{% endblock %}
-
 {% block content %}
-<div class="max-w-6xl mx-auto px-4 py-12">
-  
-  <div class="text-center mb-12">
-    <h1 class="font-display text-4xl font-bold text-leather-900 mb-4">Contacto</h1>
-    <p class="text-leather-700 text-lg">Estamos aquí para ayudarte</p>
-  </div>
-
-  <div class="grid md:grid-cols-2 gap-8">
-    
-    <!-- Formulario -->
-    <div class="bg-white rounded-xl shadow-sm p-8">
-      <h2 class="font-display text-2xl font-bold text-leather-900 mb-6">Envíanos un mensaje</h2>
-      
-      <form method="POST" class="space-y-4">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-        
-        <div>
-          <label class="block text-sm font-semibold text-leather-900 mb-2">
-            Nombre completo <span class="text-red-500">*</span>
-          </label>
-          <input type="text" name="name" required
-                 value="{{ name or '' }}"
-                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600">
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-leather-900 mb-2">
-            Email <span class="text-red-500">*</span>
-          </label>
-          <input type="email" name="email" required
-                 value="{{ email or '' }}"
-                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600">
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-leather-900 mb-2">Asunto</label>
-          <input type="text" name="subject"
-                 value="{{ subject or '' }}"
-                 placeholder="Ej: Consulta sobre un producto"
-                 class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600">
-        </div>
-
-        <div>
-          <label class="block text-sm font-semibold text-leather-900 mb-2">
-            Mensaje <span class="text-red-500">*</span>
-          </label>
-          <textarea name="message" rows="6" required
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600"
-                    placeholder="Escribe tu mensaje aquí...">{{ message or '' }}</textarea>
-        </div>
-
-        <button type="submit" class="w-full bg-craft-600 text-white py-3 rounded-lg font-semibold hover:bg-craft-500 transition">
-          Enviar Mensaje
-        </button>
-      </form>
+<div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
+    <div class="text-center mb-8 sm:mb-12">
+        <h1 class="font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-leather-900 mb-3 sm:mb-4">Contacto</h1>
+        <p class="text-leather-700 text-sm sm:text-lg">Estamos aquí para ayudarte</p>
     </div>
 
-    <!-- Información de contacto -->
-    <div class="space-y-6">
-      
-      <div class="bg-white rounded-xl shadow-sm p-8">
-        <h2 class="font-display text-2xl font-bold text-leather-900 mb-6">Información de contacto</h2>
-        
-        <div class="space-y-5">
-          <div class="flex items-start gap-4">
-            <div class="w-10 h-10 bg-leather-100 rounded-full flex items-center justify-center text-xl flex-shrink-0">
-              📧
-            </div>
-            <div>
-              <p class="font-semibold text-leather-900">Email</p>
-              <a href="mailto:marroquineriapeluzza@gmail.com" class="text-craft-600 hover:underline">
-                marroquineriapeluzza@gmail.com
-              </a>
-            </div>
-          </div>
-
-          <div class="flex items-start gap-4">
-            <div class="w-10 h-10 bg-leather-100 rounded-full flex items-center justify-center text-xl flex-shrink-0">
-              📱
-            </div>
-            <div>
-              <p class="font-semibold text-leather-900">WhatsApp</p>
-              <a href="https://wa.me/5493364658272" target="_blank" class="text-craft-600 hover:underline">
-                +54 9 336 4658272
-              </a>
-              <p class="text-xs text-gray-500">Lun a Vie 9-18hs</p>
-            </div>
-          </div>
-
-          <div class="flex items-start gap-4">
-            <div class="w-10 h-10 bg-leather-100 rounded-full flex items-center justify-center text-xl flex-shrink-0">
-              📍
-            </div>
-            <div>
-              <p class="font-semibold text-leather-900">Taller / Showroom</p>
-              <p class="text-leather-700 text-sm">
-                Guido Sapno 335<br>
-                San Nicolás De Los Arroyos, Bs. As., Argentina
-              </p>
-              <p class="text-xs text-gray-500 mt-1">Visitas con cita previa</p>
-            </div>
-          </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+        <!-- Formulario -->
+        <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 lg:p-8">
+            <h2 class="font-display text-xl sm:text-2xl font-bold text-leather-900 mb-4 sm:mb-6">Envíanos un mensaje</h2>
+            <form method="POST" class="space-y-3 sm:space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div>
+                    <label class="block text-sm font-semibold text-leather-900 mb-2">
+                        Nombre completo <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text" name="name" required value="{{ name or '' }}"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-leather-900 mb-2">
+                        Email <span class="text-red-500">*</span>
+                    </label>
+                    <input type="email" name="email" required value="{{ email or '' }}"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-leather-900 mb-2">Asunto</label>
+                    <input type="text" name="subject" value="{{ subject or '' }}"
+                           placeholder="Ej: Consulta sobre un producto"
+                           class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-leather-900 mb-2">
+                        Mensaje <span class="text-red-500">*</span>
+                    </label>
+                    <textarea name="message" rows="5" required
+                              class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600"
+                              placeholder="Escribe tu mensaje aquí...">{{ message or '' }}</textarea>
+                </div>
+                <button type="submit" class="w-full bg-craft-600 text-white py-3 rounded-lg font-semibold hover:bg-craft-500 transition">
+                    Enviar Mensaje
+                </button>
+            </form>
         </div>
-      </div>
 
-      <!-- Redes sociales -->
-      <div class="bg-leather-900 rounded-xl p-8 text-white">
-        <h2 class="font-display text-2xl font-bold mb-4">Síguenos en redes</h2>
-        <p class="text-leather-100 text-sm mb-6">
-          Descubre nuestras novedades, nuevos productos y el detrás de escena de nuestro taller.
-        </p>
-        <div class="flex gap-4">
-          <a href="#" class="w-12 h-12 bg-leather-700 rounded-full flex items-center justify-center text-2xl hover:bg-craft-600 transition">
-            📷
-          </a>
-          <a href="#" class="w-12 h-12 bg-leather-700 rounded-full flex items-center justify-center text-2xl hover:bg-craft-600 transition">
-            📘
-          </a>
-          <a href="#" class="w-12 h-12 bg-leather-700 rounded-full flex items-center justify-center text-2xl hover:bg-craft-600 transition">
-            🎵
-          </a>
+        <!-- Información de contacto -->
+        <div class="space-y-4 sm:space-y-6">
+            <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 lg:p-8">
+                <h2 class="font-display text-xl sm:text-2xl font-bold text-leather-900 mb-4 sm:mb-6">Información</h2>
+                <div class="space-y-4 sm:space-y-5">
+                    <div class="flex items-start gap-3 sm:gap-4">
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 bg-leather-100 rounded-full flex items-center justify-center text-lg sm:text-xl flex-shrink-0">📧</div>
+                        <div class="min-w-0">
+                            <p class="font-semibold text-leather-900 text-sm sm:text-base">Email</p>
+                            <a href="mailto:marroquineriapeluzza@gmail.com" class="text-craft-600 hover:underline text-xs sm:text-sm break-all">
+                                marroquineriapeluzza@gmail.com
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 sm:gap-4">
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 bg-leather-100 rounded-full flex items-center justify-center text-lg sm:text-xl flex-shrink-0">📱</div>
+                        <div>
+                            <p class="font-semibold text-leather-900 text-sm sm:text-base">WhatsApp</p>
+                            <a href="https://wa.me/5493364658272" target="_blank" class="text-craft-600 hover:underline text-xs sm:text-sm">
+                                +54 9 336 4658272
+                            </a>
+                            <p class="text-[10px] sm:text-xs text-gray-500">Lun a Vie 9-18hs</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-3 sm:gap-4">
+                        <div class="w-9 h-9 sm:w-10 sm:h-10 bg-leather-100 rounded-full flex items-center justify-center text-lg sm:text-xl flex-shrink-0">📍</div>
+                        <div>
+                            <p class="font-semibold text-leather-900 text-sm sm:text-base">Taller / Showroom</p>
+                            <p class="text-leather-700 text-xs sm:text-sm">
+                                Guido Sapno 335<br>
+                                San Nicolás De Los Arroyos, Bs. As.
+                            </p>
+                            <p class="text-[10px] sm:text-xs text-gray-500 mt-1">Visitas con cita previa</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preguntas frecuentes -->
+            <div class="bg-leather-50 rounded-xl p-4 sm:p-6 lg:p-8 border border-leather-200">
+                <h3 class="font-display text-lg sm:text-xl font-bold text-leather-900 mb-3 sm:mb-4">Preguntas Frecuentes</h3>
+                <ul class="space-y-2 sm:space-y-3 text-xs sm:text-sm">
+                    <li><a href="/envios" class="text-craft-600 hover:underline">→ ¿Cuánto tarda el envío?</a></li>
+                    <li><a href="/envios" class="text-craft-600 hover:underline">→ ¿Puedo devolver un producto?</a></li>
+                    <li><a href="/tienda" class="text-craft-600 hover:underline">→ ¿Hacen productos personalizados?</a></li>
+                    <li><a href="/envios" class="text-craft-600 hover:underline">→ ¿Qué garantía tienen?</a></li>
+                </ul>
+            </div>
         </div>
-      </div>
-
-      <!-- Preguntas frecuentes -->
-      <div class="bg-leather-50 rounded-xl p-8 border border-leather-200">
-        <h3 class="font-display text-xl font-bold text-leather-900 mb-4">Preguntas Frecuentes</h3>
-        <ul class="space-y-3 text-sm">
-          <li>
-            <a href="/envios" class="text-craft-600 hover:underline">→ ¿Cuánto tarda el envío?</a>
-          </li>
-          <li>
-            <a href="/envios" class="text-craft-600 hover:underline">→ ¿Puedo devolver un producto?</a>
-          </li>
-          <li>
-            <a href="/tienda" class="text-craft-600 hover:underline">→ ¿Hacen productos personalizados?</a>
-          </li>
-          <li>
-            <a href="/envios" class="text-craft-600 hover:underline">→ ¿Qué garantía tienen los productos?</a>
-          </li>
-        </ul>
-      </div>
     </div>
-  </div>
-
 </div>
 {% endblock %}

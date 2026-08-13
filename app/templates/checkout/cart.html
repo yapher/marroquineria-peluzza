@@ -1,24 +1,15 @@
 {% extends "base.html" %}
-
 {% block title %}Carrito de Compras | Marroquinería Artesanal{% endblock %}
-
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 py-12">
-    <h1 class="font-display text-3xl font-bold text-leather-900 mb-8">Tu Carrito de Compras</h1>
+<div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
+    <h1 class="font-display text-2xl sm:text-3xl font-bold text-leather-900 mb-4 sm:mb-8">
+        Tu Carrito de Compras
+    </h1>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table class="w-full text-left">
-            <thead class="bg-gray-50 border-b border-gray-200">
-                <tr>
-                    <th class="py-4 px-4 font-semibold text-leather-900">Producto</th>
-                    <th class="py-4 px-4 font-semibold text-leather-900">Cantidad</th>
-                    <th class="py-4 px-4 font-semibold text-leather-900">Subtotal</th>
-                    <th class="py-4 px-4"></th>
-                </tr>
-            </thead>
-            <!-- Aquí HTMX inyectará y actualizará las filas -->
+        <div class="table-responsive">
             {% include "partials/cart_body.html" %}
-        </table>
+        </div>
     </div>
 </div>
 {% endblock %}
