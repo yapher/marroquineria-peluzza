@@ -48,7 +48,7 @@
             link.hasAttribute('hx-delete') ||
             link.hasAttribute('hx-put') ||
             link.getAttribute('target') === '_blank' ||
-            href.startsWith('http') && !href.includes(window.location.hostname)) {
+            (href.startsWith('http') && !href.includes(window.location.hostname))) {
             return;
         }
         showLoader('Cargando página...');

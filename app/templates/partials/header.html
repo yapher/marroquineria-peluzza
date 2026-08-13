@@ -3,6 +3,7 @@
 <!-- ========================================== -->
 <header class="bg-white shadow-sm sticky top-0 z-40">
     <nav class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+
         <!-- 1. LOGO -->
         <a href="/" class="font-display text-xl md:text-2xl text-leather-900 font-bold flex-shrink-0">
             👜 Marroquinería
@@ -18,6 +19,7 @@
 
         <!-- 3. ACCIONES DERECHA -->
         <div class="flex items-center gap-3 md:gap-5">
+
             <!-- A. Búsqueda (Desktop) -->
             <div class="relative hidden md:block w-40 lg:w-56">
                 <form hx-get="/tienda/buscar"
@@ -33,13 +35,12 @@
                         <span id="search-spinner" class="htmx-indicator absolute right-3 top-1/2 -translate-y-1/2 text-craft-600 text-xs hidden">...</span>
                     </div>
                 </form>
-                <!-- Contenedor de resultados de búsqueda -->
                 <div id="search-results" class="absolute top-full left-0 right-0 z-50 mt-1"></div>
             </div>
 
             <!-- B. Favoritos (Solo si está logueado) -->
             {% if current_user.is_authenticated %}
-            <a href="/cuenta/favoritos" class="relative text-leather-700 hover:text-red-500 transition" title="Mis favoritos">
+            <a href="/cuenta/favoritos" class="relative text-leather-700 hover:text-red-500 transition hidden sm:block" title="Mis favoritos">
                 {% include "partials/wishlist_count.html" %}
             </a>
             {% endif %}
@@ -52,15 +53,15 @@
                 </span>
             </a>
 
-            <!-- D. Menú de Usuario -->
+            <!-- D. Menú de Usuario (Desktop) -->
             {% if current_user.is_authenticated %}
-            <div class="relative group">
+            <div class="relative group hidden xl:block">
                 <button class="flex items-center gap-2 text-leather-700 hover:text-craft-600 transition">
                     <span class="w-8 h-8 bg-leather-100 rounded-full flex items-center justify-center text-sm font-bold text-leather-900 border border-leather-200">
                         {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
                     </span>
-                    <span class="text-sm font-medium hidden xl:inline">{{ current_user.first_name }}</span>
-                    <svg class="w-4 h-4 hidden xl:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    <span class="text-sm font-medium">{{ current_user.first_name }}</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                 </button>
                 <!-- Dropdown -->
                 <div class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-100 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
@@ -77,11 +78,21 @@
                 </div>
             </div>
             {% else %}
-            <div class="flex items-center gap-3">
-                <a href="/auth/login" class="text-sm font-medium text-leather-700 hover:text-craft-600 hidden sm:inline transition">Iniciar Sesión</a>
+            <div class="hidden sm:flex items-center gap-3">
+                <a href="/auth/login" class="text-sm font-medium text-leather-700 hover:text-craft-600 transition">Iniciar Sesión</a>
                 <a href="/auth/registro" class="bg-craft-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-craft-500 transition shadow-sm">Registrarse</a>
             </div>
             {% endif %}
+
+            <!-- ✅ BOTÓN HAMBURGUESA (MÓVIL) -->
+            <button @click="mobileMenuOpen = true" 
+                    class="lg:hidden p-2 text-leather-700 hover:text-craft-600 transition" 
+                    aria-label="Abrir menú">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+
         </div>
     </nav>
 </header>
