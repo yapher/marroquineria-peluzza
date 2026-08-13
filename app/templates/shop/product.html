@@ -1,5 +1,20 @@
 {% extends "base.html" %}
+
 {% block title %}{{ product.name }} | Marroquinería Artesanal{% endblock %}
+{% block meta_description %}{{ (product.short_description or product.description[:155] ~ '...')|striptags }}{% endblock %}
+{% block meta_keywords %}{{ product.category.name }}, {{ product.name }}, cuero artesanal, hecho a mano, {{ product.artisan_name or 'artesanal' }}{% endblock %}
+{% block canonical_url %}{{ url_for('shop.product_detail', slug=product.slug, _external=True) }}{% endblock %}
+
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ product.name }} | Marroquinería Artesanal{% endblock %}
+{% block og_description %}{{ (product.short_description or product.description[:155] ~ '...')|striptags }}{% endblock %}
+{% block og_url %}{{ url_for('shop.product_detail', slug=product.slug, _external=True) }}{% endblock %}
+{% block og_image %}{{ product.image_url or url_for('static', filename='img/logo-og.png', _external=True) }}{% endblock %}
+
+{% block twitter_title %}{{ self.og_title() }}{% endblock %}
+{% block twitter_description %}{{ self.og_description() }}{% endblock %}
+{% block twitter_image %}{{ self.og_image() }}{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 py-8">
     <!-- Breadcrumb -->

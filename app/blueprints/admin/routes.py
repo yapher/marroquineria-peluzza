@@ -646,3 +646,4 @@ def reject_review(review_id):
     db.session.commit()
     flash(f"❌ Reseña de {user_name} para {product_name} rechazada", "warning")
     return redirect(url_for("admin.reviews", status=request.args.get("status", "pending")))
+
