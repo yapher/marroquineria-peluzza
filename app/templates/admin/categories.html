@@ -1,56 +1,53 @@
-{% extends "base.html" %}
-
+{% extends "layouts/admin.html" %}
 {% block title %}Categorías | Panel Admin{% endblock %}
 
-{% block content %}
-<div class="max-w-7xl mx-auto px-4 py-8">
-  <div class="flex items-center justify-between mb-8">
+{% block admin_content %}
+<div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="font-display text-4xl font-bold text-leather-900">Categorías</h1>
-      <p class="text-leather-700 mt-2">Organiza tus productos</p>
+        <h1 class="font-display text-4xl font-bold text-leather-900">Categorías</h1>
+        <p class="text-leather-700 mt-2">Organiza tus productos</p>
     </div>
     <a href="/admin/categorias/nueva" class="bg-craft-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-craft-500 transition">
-      + Nueva Categoría
+        + Nueva Categoría
     </a>
-  </div>
+</div>
 
-  <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
     <table class="w-full">
-      <thead class="bg-gray-50 border-b border-gray-200">
-        <tr>
-          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Nombre</th>
-          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Slug</th>
-          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Productos</th>
-          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Estado</th>
-          <th class="text-right py-4 px-4 text-sm font-semibold text-leather-900">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for category in categories %}
-        <tr class="border-b border-gray-100 hover:bg-gray-50">
-          <td class="py-4 px-4 font-semibold text-leather-900">{{ category.name }}</td>
-          <td class="py-4 px-4 text-sm text-gray-500">{{ category.slug }}</td>
-          <td class="py-4 px-4 text-sm">{{ category.products|length }}</td>
-          <td class="py-4 px-4 text-sm">
-            {% if category.active %}
-              <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">Activo</span>
+        <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+                <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Nombre</th>
+                <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Slug</th>
+                <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Productos</th>
+                <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Estado</th>
+                <th class="text-right py-4 px-4 text-sm font-semibold text-leather-900">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-4 px-4 font-semibold text-leather-900">{{ category.name }}</td>
+                <td class="py-4 px-4 text-sm text-gray-500">{{ category.slug }}</td>
+                <td class="py-4 px-4 text-sm">{{ category.products|length }}</td>
+                <td class="py-4 px-4 text-sm">
+                    {% if category.active %}
+                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">Activo</span>
+                    {% else %}
+                    <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-semibold">Inactivo</span>
+                    {% endif %}
+                </td>
+                <td class="py-4 px-4 text-right">
+                    <a href="/admin/categorias/{{ category.id }}/editar" class="text-craft-600 hover:underline text-sm">Editar</a>
+                </td>
+            </tr>
             {% else %}
-              <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-semibold">Inactivo</span>
-            {% endif %}
-          </td>
-          <td class="py-4 px-4 text-right">
-            <a href="/admin/categorias/{{ category.id }}/editar" class="text-craft-600 hover:underline text-sm">Editar</a>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="5" class="py-12 text-center text-gray-500">
-            No hay categorías aún. <a href="/admin/categorias/nueva" class="text-craft-600 underline">Crea la primera</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
+            <tr>
+                <td colspan="5" class="py-12 text-center text-gray-500">
+                    No hay categorías aún. <a href="/admin/categorias/nueva" class="text-craft-600 underline">Crea la primera</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
-  </div>
 </div>
 {% endblock %}

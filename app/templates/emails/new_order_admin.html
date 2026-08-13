@@ -1,124 +1,110 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nuevo Pedido Recibido</title>
-    <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #fdf8f3; margin: 0; padding: 0; }
-        .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .header { background-color: #3d1d08; color: #ffffff; padding: 40px 30px; text-align: center; }
-        .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
-        .header p { margin: 10px 0 0; opacity: 0.9; font-size: 16px; }
-        .content { padding: 40px 30px; }
-        .alert-box { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; margin-bottom: 25px; border-radius: 4px; }
-        .alert-box p { margin: 0; color: #92400e; font-weight: 600; }
-        .section { background-color: #fdf8f3; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-        .section h2 { margin: 0 0 15px; color: #3d1d08; font-size: 18px; border-bottom: 2px solid #9a5f28; padding-bottom: 8px; display: inline-block; }
-        .section p { margin: 6px 0; color: #6b3410; font-size: 14px; }
-        .product-list { margin: 20px 0; }
-        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #f3e8d8; }
-        .product-item:last-child { border-bottom: none; }
-        .product-name { font-weight: 600; color: #3d1d08; margin: 0; font-size: 15px; }
-        .product-details { font-size: 13px; color: #6b3410; margin: 4px 0 0; }
-        .product-price { font-weight: 700; color: #9a5f28; font-size: 16px; }
-        .total-section { background-color: #3d1d08; color: white; padding: 20px; border-radius: 8px; margin-top: 20px; }
-        .total-row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 14px; }
-        .total-row.final { border-top: 1px solid rgba(255,255,255,0.2); padding-top: 12px; margin-top: 12px; font-size: 20px; font-weight: 700; }
-        .button { display: inline-block; background-color: #9a5f28; color: white !important; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 15px; text-align: center; }
-        .footer { background-color: #f9ebd9; padding: 30px; text-align: center; color: #6b3410; font-size: 13px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>👜 Marroquinería Artesanal</h1>
-            <p>¡Tienes un nuevo pedido!</p>
+{% extends "layouts/email.html" %}
+
+{% block email_title %}Nuevo Pedido Recibido{% endblock %}
+
+{% block email_header %}
+<h1>👜 Marroquinería Artesanal</h1>
+<p>¡Tienes un nuevo pedido!</p>
+{% endblock %}
+
+{% block extra_styles %}
+.alert-box {
+    background-color: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 15px 20px;
+    margin-bottom: 25px;
+    border-radius: 4px;
+}
+.alert-box p { margin: 0; color: #92400e; font-weight: 600; }
+.product-list { margin: 20px 0; }
+.product-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid #f3e8d8;
+}
+.product-item:last-child { border-bottom: none; }
+.product-name { font-weight: 600; color: #3d1d08; margin: 0; font-size: 15px; }
+.product-details { font-size: 13px; color: #6b3410; margin: 4px 0 0; }
+.product-price { font-weight: 700; color: #9a5f28; font-size: 16px; }
+{% endblock %}
+
+{% block email_content %}
+<div class="alert-box">
+    <p>🔔 Se ha generado un nuevo pedido y está pendiente de pago o procesamiento.</p>
 </div>
-        <div class="content">
-            <div class="alert-box">
-                <p>🔔 Se ha generado un nuevo pedido y está pendiente de pago o procesamiento.</p>
-            </div>
 
-            <div class="section">
-                <h2>👤 Datos del Cliente</h2>
-                <p><strong>Nombre:</strong> {{ order.customer_name }}</p>
-                <p><strong>Email:</strong> <a href="mailto:{{ order.customer_email }}" style="color: #9a5f28;">{{ order.customer_email }}</a></p>
-                {% if order.customer_phone %}
-                <p><strong>Teléfono:</strong> {{ order.customer_phone }}</p>
-                {% endif %}
-                <p><strong>Fecha:</strong> {{ order.created_at.strftime('%d/%m/%Y a las %H:%M') }}</p>
-            </div>
+<div class="info-box">
+    <h2>👤 Datos del Cliente</h2>
+    <p><strong>Nombre:</strong> {{ order.customer_name }}</p>
+    <p><strong>Email:</strong> <a href="mailto:{{ order.customer_email }}" style="color: #9a5f28;">{{ order.customer_email }}</a></p>
+    {% if order.customer_phone %}
+    <p><strong>Teléfono:</strong> {{ order.customer_phone }}</p>
+    {% endif %}
+    <p><strong>Fecha:</strong> {{ order.created_at.strftime('%d/%m/%Y a las %H:%M') }}</p>
+</div>
 
-            <div class="section">
-                <h2>📦 Dirección de Envío</h2>
-                <p><strong>{{ order.customer_name }}</strong></p>
-                <p>{{ order.shipping_address }}</p>
-                <p>{{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_zip }}</p>
-                <p>{{ order.shipping_country }}</p>
-            </div>
+<div class="info-box">
+    <h2>📦 Dirección de Envío</h2>
+    <p><strong>{{ order.customer_name }}</strong></p>
+    <p>{{ order.shipping_address }}</p>
+    <p>{{ order.shipping_city }}, {{ order.shipping_state }} {{ order.shipping_zip }}</p>
+    <p>{{ order.shipping_country }}</p>
+</div>
 
-            <div class="section">
-                <h2>🛍️ Productos</h2>
-                <div class="product-list">
-                    {% for item in order.items %}
-                    <div class="product-item">
-                        <div>
-                            <p class="product-name">{{ item.product_name }}</p>
-                            <p class="product-details">SKU: {{ item.product_sku }} | Cant: {{ item.quantity }} × ${{ "%.2f"|format(item.price) }}</p>
-                        </div>
-                        <p class="product-price">${{ "%.2f"|format(item.subtotal) }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
+<div class="info-box">
+    <h2>🛍️ Productos</h2>
+    <div class="product-list">
+        {% for item in order.items %}
+        <div class="product-item">
+            <div>
+                <p class="product-name">{{ item.product_name }}</p>
+                <p class="product-details">SKU: {{ item.product_sku }} | Cant: {{ item.quantity }} × ${{ "%.2f"|format(item.price) }}</p>
             </div>
-
-            <div class="total-section">
-                <div class="total-row">
-                    <span>Subtotal</span>
-                    <span>${{ "%.2f"|format(order.subtotal) }}</span>
-                </div>
-                <div class="total-row">
-                    <span>Envío</span>
-                    <span>${{ "%.2f"|format(order.shipping_cost) }}</span>
-                </div>
-                {% if order.coupon_discount and order.coupon_discount > 0 %}
-                <div class="total-row" style="color: #86efac;">
-                    <span>Descuento Cupón</span>
-                    <span>-${{ "%.2f"|format(order.coupon_discount) }}</span>
-                </div>
-                {% endif %}
-                {% if order.level_discount and order.level_discount > 0 %}
-                <div class="total-row" style="color: #86efac;">
-                    <span>Descuento Fidelidad</span>
-                    <span>-${{ "%.2f"|format(order.level_discount) }}</span>
-                </div>
-                {% endif %}
-                <div class="total-row final">
-                    <span>TOTAL</span>
-                    <span>${{ "%.2f"|format(order.total) }}</span>
-                </div>
-            </div>
-
-            {% if order.notes %}
-            <div class="section" style="margin-top: 20px; border-left: 4px solid #9a5f28;">
-                <h2>📝 Notas del Cliente</h2>
-                <p style="font-style: italic; color: #6b3410;">"{{ order.notes }}"</p>
-            </div>
-            {% endif %}
-
-            <div style="text-align: center; margin-top: 30px;">
-                <a href="{{ url_for('admin.order_detail', order_id=order.id, _external=True) }}" class="button">
-                    Ver Pedido en el Panel Admin →
-                </a>
-            </div>
+            <p class="product-price">${{ "%.2f"|format(item.subtotal) }}</p>
         </div>
-
-        <div class="footer">
-            <p><strong>Marroquinería Artesanal</strong></p>
-            <p>Este es un mensaje automático del sistema de gestión de pedidos.</p>
-            <p style="margin-top: 15px; font-size: 11px; opacity: 0.7;">© 2026 Marroquinería Artesanal. Todos los derechos reservados.</p>
-        </div>
+        {% endfor %}
     </div>
-</body>
-</html>
+</div>
+
+<div class="total-section">
+    <div class="total-row">
+        <span>Subtotal</span>
+        <span>${{ "%.2f"|format(order.subtotal) }}</span>
+    </div>
+    <div class="total-row">
+        <span>Envío</span>
+        <span>${{ "%.2f"|format(order.shipping_cost) }}</span>
+    </div>
+    {% if order.coupon_discount and order.coupon_discount > 0 %}
+    <div class="total-row" style="color: #86efac;">
+        <span>Descuento Cupón</span>
+        <span>-${{ "%.2f"|format(order.coupon_discount) }}</span>
+    </div>
+    {% endif %}
+    {% if order.level_discount and order.level_discount > 0 %}
+    <div class="total-row" style="color: #86efac;">
+        <span>Descuento Fidelidad</span>
+        <span>-${{ "%.2f"|format(order.level_discount) }}</span>
+    </div>
+    {% endif %}
+    <div class="total-row final">
+        <span>TOTAL</span>
+        <span>${{ "%.2f"|format(order.total) }}</span>
+    </div>
+</div>
+
+{% if order.notes %}
+<div class="info-box" style="margin-top: 20px; border-left: 4px solid #9a5f28;">
+    <h2>📝 Notas del Cliente</h2>
+    <p style="font-style: italic; color: #6b3410;">"{{ order.notes }}"</p>
+</div>
+{% endif %}
+
+<div style="text-align: center; margin-top: 30px;">
+    <a href="{{ url_for('admin.order_detail', order_id=order.id, _external=True) }}" class="button">
+        Ver Pedido en el Panel Admin →
+    </a>
+</div>
+{% endblock %}

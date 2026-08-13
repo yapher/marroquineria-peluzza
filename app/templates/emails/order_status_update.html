@@ -1,136 +1,120 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #fdf8f3; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-    .header { background-color: #3d1d08; color: #ffffff; padding: 40px 30px; text-align: center; }
-    .header h1 { margin: 0; font-size: 28px; }
-    .header p { margin: 10px 0 0; opacity: 0.9; }
-    .content { padding: 40px 30px; }
-    .status-badge { display: inline-block; padding: 12px 24px; border-radius: 24px; font-weight: 700; font-size: 16px; margin: 20px 0; }
-    .status-paid { background-color: #dbeafe; color: #1e40af; }
-    .status-preparing { background-color: #f3e8ff; color: #6b21a8; }
-    .status-shipped { background-color: #e0e7ff; color: #3730a3; }
-    .status-delivered { background-color: #dcfce7; color: #166534; }
-    .status-completed { background-color: #166534; color: white; }
-    .status-cancelled { background-color: #fee2e2; color: #991b1b; }
-    .info-box { background-color: #fdf8f3; border-radius: 8px; padding: 20px; margin: 20px 0; }
-    .info-box h2 { margin: 0 0 10px; color: #3d1d08; font-size: 18px; }
-    .info-box p { margin: 5px 0; color: #6b3410; font-size: 14px; }
-    .tracking-box { background-color: #f0f9ff; border: 2px dashed #0ea5e9; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
-    .tracking-box p { margin: 5px 0; }
-    .tracking-number { font-family: monospace; font-size: 20px; font-weight: 700; color: #0369a1; letter-spacing: 2px; }
-    .notes-box { background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px 20px; margin: 20px 0; border-radius: 4px; }
-    .footer { background-color: #f9ebd9; padding: 30px; text-align: center; color: #6b3410; font-size: 13px; }
-    .button { display: inline-block; background-color: #9a5f28; color: white !important; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 15px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    
-    <div class="header">
-      <h1>👜 Marroquinería Artesanal</h1>
-      <p>Actualización de tu pedido #{{ order.id }}</p>
-    </div>
+{% extends "layouts/email.html" %}
 
-    <div class="content">
-      <p style="color: #3d1d08; font-size: 16px; line-height: 1.6;">
-        Hola <strong>{{ order.customer_name.split()[0] }}</strong>,
-      </p>
-      
-      <p style="color: #3d1d08; font-size: 16px; line-height: 1.6;">
-        Tenemos noticias sobre tu pedido. El estado ha cambiado:
-      </p>
+{% block email_title %}Actualización de Pedido{% endblock %}
 
-      <div style="text-align: center;">
-        <span class="status-badge status-{{ new_status }}">
-          {{ order.status_icon }} {{ order.status_display }}
-        </span>
-      </div>
+{% block email_header %}
+<h1>👜 Marroquinería Artesanal</h1>
+<p>Actualización de tu pedido #{{ order.id }}</p>
+{% endblock %}
 
-      <!-- Mensaje según el estado -->
-      {% if new_status == 'paid' %}
-        <div class="info-box">
-          <h2>✅ ¡Pago confirmado!</h2>
-          <p>Hemos recibido tu pago correctamente. En las próximas horas comenzaremos a preparar tu pedido con mucho cuidado.</p>
-        </div>
-      
-      {% elif new_status == 'preparing' %}
-        <div class="info-box">
-          <h2>📦 Tu pedido está en preparación</h2>
-          <p>Nuestros artesanos están preparando tus productos con el mayor cuidado. Pronto te avisaremos cuando sea despachado.</p>
-        </div>
-      
-      {% elif new_status == 'shipped' %}
-        <div class="info-box">
-          <h2>🚚 ¡Tu pedido va en camino!</h2>
-          <p>Tu pedido fue despachado y ya está en manos del courier. Pronto lo tendrás en tus manos.</p>
-        </div>
-        
-        {% if order.tracking_number %}
-        <div class="tracking-box">
-          <p style="color: #0369a1; font-size: 14px; margin-bottom: 8px;">📮 Número de seguimiento:</p>
-          <p class="tracking-number">{{ order.tracking_number }}</p>
-          <p style="color: #64748b; font-size: 12px; margin-top: 10px;">Usa este código para rastrear tu paquete</p>
-        </div>
-        {% endif %}
-      
-      {% elif new_status == 'delivered' %}
-        <div class="info-box">
-          <h2>🏠 ¡Tu pedido fue entregado!</h2>
-          <p>Según el courier, tu pedido ya fue entregado en la dirección indicada. Esperamos que lo disfrutes.</p>
-        </div>
-      
-      {% elif new_status == 'completed' %}
-        <div class="info-box">
-          <h2>🎉 ¡Pedido completado!</h2>
-          <p>Tu pedido ha sido completado exitosamente. ¡Gracias por confiar en nosotros!</p>
-          <p style="margin-top: 10px;">Si tienes un momento, nos encantaría que nos dejaras una reseña sobre tu experiencia.</p>
-        </div>
-      
-      {% elif new_status == 'cancelled' %}
-        <div class="info-box" style="background-color: #fef2f2;">
-          <h2 style="color: #991b1b;">❌ Pedido cancelado</h2>
-          <p style="color: #7f1d1d;">Tu pedido ha sido cancelado. Si tienes alguna duda, contáctanos.</p>
-        </div>
-      {% endif %}
+{% block extra_styles %}
+.status-badge {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 24px;
+    font-weight: 700;
+    font-size: 16px;
+    margin: 20px 0;
+}
+.status-paid { background-color: #dbeafe; color: #1e40af; }
+.status-preparing { background-color: #f3e8ff; color: #6b21a8; }
+.status-shipped { background-color: #e0e7ff; color: #3730a3; }
+.status-delivered { background-color: #dcfce7; color: #166534; }
+.status-completed { background-color: #166534; color: white; }
+.status-cancelled { background-color: #fee2e2; color: #991b1b; }
+.tracking-box {
+    background-color: #f0f9ff;
+    border: 2px dashed #0ea5e9;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: center;
+}
+.tracking-number {
+    font-family: monospace;
+    font-size: 20px;
+    font-weight: 700;
+    color: #0369a1;
+    letter-spacing: 2px;
+}
+.notes-box {
+    background-color: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 15px 20px;
+    margin: 20px 0;
+    border-radius: 4px;
+}
+{% endblock %}
 
-      <!-- Notas del admin -->
-      {% if order.admin_notes %}
-      <div class="notes-box">
-        <p style="margin: 0; font-weight: 600; color: #92400e;">📝 Mensaje del equipo:</p>
-        <p style="margin: 8px 0 0; color: #78350f; white-space: pre-line;">{{ order.admin_notes.split('\n\n')[-1].split('\n', 1)[-1] }}</p>
-      </div>
-      {% endif %}
+{% block email_content %}
+<p style="color: #3d1d08; font-size: 16px; line-height: 1.6;">
+    Hola <strong>{{ order.customer_name.split()[0] }}</strong>,
+</p>
+<p style="color: #3d1d08; font-size: 16px; line-height: 1.6;">
+    Tenemos noticias sobre tu pedido. El estado ha cambiado:
+</p>
 
-      <!-- Resumen del pedido -->
-      <div class="info-box">
-        <h2>📋 Resumen del pedido</h2>
-        <p><strong>Número:</strong> #{{ order.id }}</p>
-        <p><strong>Total:</strong> ${{ "%.2f"|format(order.total) }}</p>
-        <p><strong>Productos:</strong> {{ order.items|length }}</p>
-      </div>
+<div style="text-align: center;">
+    <span class="status-badge status-{{ new_status }}">
+        {{ order.status_icon }} {{ order.status_display }}
+    </span>
+</div>
 
-      <p style="text-align: center; margin-top: 30px;">
-        <a href="{{ url_for('account.order_detail', order_id=order.id, _external=True) }}" class="button">
-          Ver detalle del pedido
-        </a>
-      </p>
+<!-- Mensaje según el estado -->
+{% if new_status == 'paid' %}
+<div class="info-box">
+    <h2>✅ ¡Pago confirmado!</h2>
+    <p>Hemos recibido tu pago correctamente. En las próximas horas comenzaremos a preparar tu pedido con mucho cuidado.</p>
+</div>
+{% elif new_status == 'preparing' %}
+<div class="info-box">
+    <h2>📦 Tu pedido está en preparación</h2>
+    <p>Nuestros artesanos están preparando tus productos con el mayor cuidado. Pronto te avisaremos cuando sea despachado.</p>
+</div>
+{% elif new_status == 'shipped' %}
+<div class="info-box">
+    <h2>🚚 ¡Tu pedido va en camino!</h2>
+    <p>Tu pedido fue despachado y ya está en manos del courier. Pronto lo tendrás en tus manos.</p>
+</div>
+{% if order.tracking_number %}
+<div class="tracking-box">
+    <p style="color: #0369a1; font-size: 14px; margin-bottom: 8px;">📮 Número de seguimiento:</p>
+    <p class="tracking-number">{{ order.tracking_number }}</p>
+    <p style="color: #64748b; font-size: 12px; margin-top: 10px;">Usa este código para rastrear tu paquete</p>
+</div>
+{% endif %}
+{% elif new_status == 'delivered' %}
+<div class="info-box">
+    <h2>🏠 ¡Tu pedido fue entregado!</h2>
+    <p>Según el courier, tu pedido ya fue entregado en la dirección indicada. Esperamos que lo disfrutes.</p>
+</div>
+{% elif new_status == 'completed' %}
+<div class="info-box">
+    <h2>🎉 ¡Pedido completado!</h2>
+    <p>Tu pedido ha sido completado exitosamente. ¡Gracias por confiar en nosotros!</p>
+    <p style="margin-top: 10px;">Si tienes un momento, nos encantaría que nos dejaras una reseña sobre tu experiencia.</p>
+</div>
+{% elif new_status == 'cancelled' %}
+<div class="info-box" style="background-color: #fef2f2;">
+    <h2 style="color: #991b1b;">❌ Pedido cancelado</h2>
+    <p style="color: #7f1d1d;">Tu pedido ha sido cancelado. Si tienes alguna duda, contáctanos.</p>
+</div>
+{% endif %}
 
-      <p style="color: #6b3410; font-size: 14px; text-align: center; margin-top: 30px;">
-        ¿Preguntas? Respóndenos este email y te ayudaremos encantados.
-      </p>
-    </div>
+<!-- Resumen del pedido -->
+<div class="info-box">
+    <h2>📋 Resumen del pedido</h2>
+    <p><strong>Número:</strong> #{{ order.id }}</p>
+    <p><strong>Total:</strong> ${{ "%.2f"|format(order.total) }}</p>
+    <p><strong>Productos:</strong> {{ order.items|length }}</p>
+</div>
 
-    <div class="footer">
-      <p><strong>Marroquinería Artesanal</strong></p>
-      <p>Cuero genuino, hecho a mano por artesanos locales</p>
-      <p style="margin-top: 15px; font-size: 11px; opacity: 0.7;">
-        © 2026 Marroquinería Artesanal. Todos los derechos reservados.
-      </p>
-    </div>
-  </div>
-</body>
-</html>
+<p style="text-align: center; margin-top: 30px;">
+    <a href="{{ url_for('account.order_detail', order_id=order.id, _external=True) }}" class="button">
+        Ver detalle del pedido
+    </a>
+</p>
+<p style="color: #6b3410; font-size: 14px; text-align: center; margin-top: 30px;">
+    ¿Preguntas? Respóndenos este email y te ayudaremos encantados.
+</p>
+{% endblock %}

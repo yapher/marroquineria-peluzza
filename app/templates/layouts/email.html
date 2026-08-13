@@ -1,0 +1,139 @@
+{# ============================================
+   LAYOUT BASE PARA TODOS LOS EMAILS
+   Centraliza el HTML, CSS base y estructura.
+   ============================================ #}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block email_title %}Marroquinería Artesanal{% endblock %}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #fdf8f3;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .header {
+            background-color: #3d1d08;
+            color: #ffffff;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .header p {
+            margin: 10px 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .footer {
+            background-color: #f9ebd9;
+            padding: 30px;
+            text-align: center;
+            color: #6b3410;
+            font-size: 13px;
+        }
+        .footer a {
+            color: #9a5f28;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .button {
+            display: inline-block;
+            background-color: #9a5f28;
+            color: white !important;
+            padding: 12px 30px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+        .info-box {
+            background-color: #fdf8f3;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-box h2 {
+            margin: 0 0 15px;
+            color: #3d1d08;
+            font-size: 18px;
+            border-bottom: 2px solid #9a5f28;
+            padding-bottom: 8px;
+            display: inline-block;
+        }
+        .info-box h3 {
+            margin: 0 0 10px;
+            color: #3d1d08;
+            font-size: 16px;
+        }
+        .info-box p {
+            margin: 5px 0;
+            color: #6b3410;
+            font-size: 14px;
+        }
+        .total-section {
+            background-color: #3d1d08;
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        .total-row.final {
+            border-top: 1px solid rgba(255,255,255,0.2);
+            padding-top: 12px;
+            margin-top: 12px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        /* Estilos adicionales por template */
+        {% block extra_styles %}{% endblock %}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            {% block email_header %}
+            <h1>👜 Marroquinería Artesanal</h1>
+            {% endblock %}
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            {% block email_content %}{% endblock %}
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Marroquinería Artesanal</strong></p>
+            <p>Cuero genuino, hecho a mano por artesanos locales</p>
+            <p style="margin-top: 15px; font-size: 11px; opacity: 0.7;">
+                © 2026 Marroquinería Artesanal. Todos los derechos reservados.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

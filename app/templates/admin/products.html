@@ -1,82 +1,79 @@
-{% extends "base.html" %}
-
+{% extends "layouts/admin.html" %}
 {% block title %}Productos | Panel Admin{% endblock %}
 
-{% block content %}
-<div class="max-w-7xl mx-auto px-4 py-8">
-  <div class="flex items-center justify-between mb-8">
+{% block admin_content %}
+<div class="flex items-center justify-between mb-8">
     <div>
-      <h1 class="font-display text-4xl font-bold text-leather-900">Productos</h1>
-      <p class="text-leather-700 mt-2">Gestiona tu catálogo de productos</p>
+        <h1 class="font-display text-4xl font-bold text-leather-900">Productos</h1>
+        <p class="text-leather-700 mt-2">Gestiona tu catálogo de productos</p>
     </div>
     <a href="/admin/productos/nuevo" class="bg-craft-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-craft-500 transition">
-      + Nuevo Producto
+        + Nuevo Producto
     </a>
-  </div>
+</div>
 
-  <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
     <table class="w-full">
-      <thead class="bg-gray-50 border-b border-gray-200">
-        <tr>
-          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Producto</th>
-          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Categoría</th>
-          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Precio</th>
-          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Stock</th>
-          <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Estado</th>
-          <th class="text-right py-4 px-4 text-sm font-semibold text-leather-900">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for product in products %}
-        <tr class="border-b border-gray-100 hover:bg-gray-50">
-          <td class="py-4 px-4">
-            <div class="flex items-center gap-3">
-              <div class="w-12 h-12 bg-leather-100 rounded-lg flex items-center justify-center text-2xl">
-                {% if product.category.slug == 'billeteras' %}👛
-                {% elif product.category.slug == 'bolsos' %}👜
-                {% elif product.category.slug == 'cinturones' %}🎗️
-                {% else %}👜{% endif %}
-              </div>
-              <div>
-                <p class="font-semibold text-leather-900">{{ product.name }}</p>
-                <p class="text-xs text-gray-500">SKU: {{ product.sku }}</p>
-              </div>
-            </div>
-          </td>
-          <td class="py-4 px-4 text-sm text-leather-700">{{ product.category.name }}</td>
-          <td class="py-4 px-4 text-sm font-semibold text-leather-900">${{ "%.2f"|format(product.price) }}</td>
-          <td class="py-4 px-4 text-sm">
-            <span class="{% if product.stock > 10 %}text-green-600{% elif product.stock > 0 %}text-yellow-600{% else %}text-red-600{% endif %}">
-              {{ product.stock }}
-            </span>
-          </td>
-          <td class="py-4 px-4 text-sm">
-            {% if product.active %}
-              <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">Activo</span>
+        <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+                <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Producto</th>
+                <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Categoría</th>
+                <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Precio</th>
+                <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Stock</th>
+                <th class="text-left py-4 px-4 text-sm font-semibold text-leather-900">Estado</th>
+                <th class="text-right py-4 px-4 text-sm font-semibold text-leather-900">Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in products %}
+            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-4 px-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-leather-100 rounded-lg flex items-center justify-center text-2xl">
+                            {% if product.category.slug == 'billeteras' %}👛
+                            {% elif product.category.slug == 'bolsos' %}👜
+                            {% elif product.category.slug == 'cinturones' %}🎗️
+                            {% else %}👜{% endif %}
+                        </div>
+                        <div>
+                            <p class="font-semibold text-leather-900">{{ product.name }}</p>
+                            <p class="text-xs text-gray-500">SKU: {{ product.sku }}</p>
+                        </div>
+                    </div>
+                </td>
+                <td class="py-4 px-4 text-sm text-leather-700">{{ product.category.name }}</td>
+                <td class="py-4 px-4 text-sm font-semibold text-leather-900">${{ "%.2f"|format(product.price) }}</td>
+                <td class="py-4 px-4 text-sm">
+                    <span class="{% if product.stock > 10 %}text-green-600{% elif product.stock > 0 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                        {{ product.stock }}
+                    </span>
+                </td>
+                <td class="py-4 px-4 text-sm">
+                    {% if product.active %}
+                    <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">Activo</span>
+                    {% else %}
+                    <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-semibold">Inactivo</span>
+                    {% endif %}
+                    {% if product.featured %}
+                    <span class="px-2 py-1 bg-craft-600 text-white rounded text-xs font-semibold ml-1">Destacado</span>
+                    {% endif %}
+                </td>
+                <td class="py-4 px-4 text-right">
+                    <a href="/admin/productos/{{ product.id }}/editar" class="text-craft-600 hover:underline text-sm mr-3">Editar</a>
+                    <form method="POST" action="/admin/productos/{{ product.id }}/eliminar" class="inline" onsubmit="return confirm('¿Eliminar este producto?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="text-red-600 hover:underline text-sm">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
             {% else %}
-              <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-semibold">Inactivo</span>
-            {% endif %}
-            {% if product.featured %}
-              <span class="px-2 py-1 bg-craft-600 text-white rounded text-xs font-semibold ml-1">Destacado</span>
-            {% endif %}
-          </td>
-          <td class="py-4 px-4 text-right">
-            <a href="/admin/productos/{{ product.id }}/editar" class="text-craft-600 hover:underline text-sm mr-3">Editar</a>
-            <form method="POST" action="/admin/productos/{{ product.id }}/eliminar" class="inline" onsubmit="return confirm('¿Eliminar este producto?')">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-  <button type="submit" class="text-red-600 hover:underline text-sm">Eliminar</button>
-</form>
-          </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="6" class="py-12 text-center text-gray-500">
-            No hay productos aún. <a href="/admin/productos/nuevo" class="text-craft-600 underline">Crea el primero</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
+            <tr>
+                <td colspan="6" class="py-12 text-center text-gray-500">
+                    No hay productos aún. <a href="/admin/productos/nuevo" class="text-craft-600 underline">Crea el primero</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
     </table>
-  </div>
 </div>
 {% endblock %}

@@ -1,45 +1,26 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #fdf8f3; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; }
-    .header { background-color: #3d1d08; color: #ffffff; padding: 40px 30px; text-align: center; }
-    .header h1 { margin: 0; font-size: 28px; }
-    .content { padding: 40px 30px; color: #3d1d08; }
-    .content h2 { color: #9a5f28; margin-top: 0; }
-    .button { display: inline-block; background-color: #9a5f28; color: white !important; padding: 14px 35px; border-radius: 8px; text-decoration: none; font-weight: 600; margin: 20px 0; }
-    .footer { background-color: #f9ebd9; padding: 30px; text-align: center; color: #6b3410; font-size: 13px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>👜 ¡Bienvenido/a!</h1>
-    </div>
-    <div class="content">
-      <h2>Hola {{ user.first_name }},</h2>
-      <p style="font-size: 16px; line-height: 1.6;">
-        Gracias por crear una cuenta en <strong>Marroquinería Artesanal</strong>. 
-        Ya eres parte de nuestra comunidad que valora el trabajo hecho a mano.
-      </p>
-      <p style="font-size: 16px; line-height: 1.6;">
-        Con tu cuenta podrás:
-      </p>
-      <ul style="font-size: 16px; line-height: 1.8;">
-        <li>✓ Ver el historial de tus pedidos</li>
-        <li>✓ Guardar tus direcciones favoritas</li>
-        <li>✓ Acceder a ofertas exclusivas</li>
-      </ul>
-      <p style="text-align: center;">
-        <a href="{{ url_for('shop.catalog', _external=True) }}" class="button">Explorar la tienda</a>
-      </p>
-    </div>
-    <div class="footer">
-      <p><strong>Marroquinería Artesanal</strong></p>
-      <p>Cuero genuino, hecho a mano</p>
-    </div>
-  </div>
-</body>
-</html>
+{% extends "layouts/email.html" %}
+
+{% block email_title %}¡Bienvenido/a! | Marroquinería Artesanal{% endblock %}
+
+{% block email_header %}
+<h1>👜 ¡Bienvenido/a!</h1>
+{% endblock %}
+
+{% block email_content %}
+<h2 style="color: #9a5f28; margin-top: 0;">Hola {{ user.first_name }},</h2>
+<p style="font-size: 16px; line-height: 1.6; color: #3d1d08;">
+    Gracias por crear una cuenta en <strong>Marroquinería Artesanal</strong>.
+    Ya eres parte de nuestra comunidad que valora el trabajo hecho a mano.
+</p>
+<p style="font-size: 16px; line-height: 1.6; color: #3d1d08;">
+    Con tu cuenta podrás:
+</p>
+<ul style="font-size: 16px; line-height: 1.8; color: #3d1d08;">
+    <li>✓ Ver el historial de tus pedidos</li>
+    <li>✓ Guardar tus direcciones favoritas</li>
+    <li>✓ Acceder a ofertas exclusivas</li>
+</ul>
+<p style="text-align: center;">
+    <a href="{{ url_for('shop.catalog', _external=True) }}" class="button">Explorar la tienda</a>
+</p>
+{% endblock %}

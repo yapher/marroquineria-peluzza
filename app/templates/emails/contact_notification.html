@@ -1,65 +1,61 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <style>
-    body { font-family: 'Helvetica Neue', Arial, sans-serif; background-color: #fdf8f3; margin: 0; padding: 0; }
-    .container { max-width: 600px; margin: 20px auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .header { background-color: #3d1d08; color: #ffffff; padding: 30px; text-align: center; }
-    .header h1 { margin: 0; font-size: 24px; }
-    .content { padding: 30px; }
-    .info-row { padding: 12px 0; border-bottom: 1px solid #f3e8d8; }
-    .info-row:last-child { border-bottom: none; }
-    .info-label { font-size: 12px; color: #6b3410; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
-    .info-value { font-size: 15px; color: #3d1d08; }
-    .message-box { background-color: #fdf8f3; border-left: 4px solid #9a5f28; padding: 20px; margin-top: 20px; border-radius: 4px; white-space: pre-line; }
-    .footer { background-color: #f9ebd9; padding: 20px; text-align: center; color: #6b3410; font-size: 12px; }
-    .reply-button { display: inline-block; background-color: #9a5f28; color: white !important; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 20px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>📬 Nuevo mensaje de contacto</h1>
-      <p style="margin: 10px 0 0; opacity: 0.9;">Desde el sitio web de Marroquinería Artesanal</p>
+{% extends "layouts/email.html" %}
+
+{% block email_title %}Nuevo mensaje de contacto{% endblock %}
+
+{% block email_header %}
+<h1>📬 Nuevo mensaje de contacto</h1>
+<p style="margin: 10px 0 0; opacity: 0.9;">Desde el sitio web de Marroquinería Artesanal</p>
+{% endblock %}
+
+{% block extra_styles %}
+.info-row { padding: 12px 0; border-bottom: 1px solid #f3e8d8; }
+.info-row:last-child { border-bottom: none; }
+.info-label { font-size: 12px; color: #6b3410; text-transform: uppercase; font-weight: 600; margin-bottom: 4px; }
+.info-value { font-size: 15px; color: #3d1d08; }
+.message-box {
+    background-color: #fdf8f3;
+    border-left: 4px solid #9a5f28;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 4px;
+    white-space: pre-line;
+}
+.reply-button {
+    display: inline-block;
+    background-color: #9a5f28;
+    color: white !important;
+    padding: 12px 30px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    margin-top: 20px;
+}
+{% endblock %}
+
+{% block email_content %}
+<div class="info-row">
+    <div class="info-label">Nombre</div>
+    <div class="info-value">{{ name }}</div>
+</div>
+<div class="info-row">
+    <div class="info-label">Email del cliente</div>
+    <div class="info-value">
+        <a href="mailto:{{ email }}">{{ email }}</a>
     </div>
-
-    <div class="content">
-      <div class="info-row">
-        <div class="info-label">Nombre</div>
-        <div class="info-value">{{ name }}</div>
-      </div>
-
-      <div class="info-row">
-        <div class="info-label">Email del cliente</div>
-        <div class="info-value">
-          <a href="mailto:{{ email }}">{{ email }}</a>
-        </div>
-      </div>
-
-      {% if contact_subject %}
-      <div class="info-row">
-        <div class="info-label">Asunto</div>
-        <div class="info-value">{{ contact_subject }}</div>
-      </div>
-      {% endif %}
-
-      <div class="info-row">
-        <div class="info-label">Mensaje</div>
-        <div class="message-box">{{ message }}</div>
-      </div>
-
-      <p style="text-align: center; margin-top: 30px;">
-        <a href="mailto:{{ email }}?subject=Re: {{ contact_subject or 'Contacto desde el sitio web' }}" class="reply-button">
-          Responder al cliente
-        </a>
-      </p>
-    </div>
-
-    <div class="footer">
-      <p><strong>Marroquinería Artesanal</strong></p>
-      <p>Este mensaje fue enviado desde el formulario de contacto del sitio web.</p>
-    </div>
-  </div>
-</body>
-</html>
+</div>
+{% if contact_subject %}
+<div class="info-row">
+    <div class="info-label">Asunto</div>
+    <div class="info-value">{{ contact_subject }}</div>
+</div>
+{% endif %}
+<div class="info-row">
+    <div class="info-label">Mensaje</div>
+    <div class="message-box">{{ message }}</div>
+</div>
+<p style="text-align: center; margin-top: 30px;">
+    <a href="mailto:{{ email }}?subject=Re: {{ contact_subject or 'Contacto desde el sitio web' }}" class="reply-button">
+        Responder al cliente
+    </a>
+</p>
+{% endblock %}
