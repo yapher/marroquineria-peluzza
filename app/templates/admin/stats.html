@@ -118,13 +118,23 @@
     <!-- Gráfico de Ventas por Mes -->
     <div class="bg-white rounded-xl shadow-sm p-6">
       <h2 class="font-display text-xl font-bold text-leather-900 mb-4">📈 Ventas por Mes</h2>
-      <canvas id="salesChart" height="250"></canvas>
+      <div style="position: relative; height: 300px;">
+        <canvas id="salesChart" 
+            data-labels='{{ months_labels|tojson }}'
+            data-revenue='{{ monthly_revenue|tojson }}'>
+        </canvas>
+      </div>
     </div>
 
     <!-- Gráfico de Ingresos por Categoría -->
     <div class="bg-white rounded-xl shadow-sm p-6">
       <h2 class="font-display text-xl font-bold text-leather-900 mb-4">🏷️ Ingresos por Categoría</h2>
-      <canvas id="categoryChart" height="250"></canvas>
+      <div style="position: relative; height: 300px;">
+        <canvas id="categoryChart"
+            data-labels='{{ category_labels|tojson }}'
+            data-revenue='{{ category_revenue|tojson }}'>
+        </canvas>
+      </div>
     </div>
   </div>
 
@@ -133,7 +143,12 @@
     <!-- Gráfico de Pedidos por Estado -->
     <div class="bg-white rounded-xl shadow-sm p-6">
       <h2 class="font-display text-xl font-bold text-leather-900 mb-4">📋 Distribución de Estados</h2>
-      <canvas id="statusChart" height="250"></canvas>
+      <div style="position: relative; height: 300px;">
+        <canvas id="statusChart"
+            data-labels='{{ status_labels|tojson }}'
+            data-counts='{{ status_counts|tojson }}'>
+        </canvas>
+      </div>
     </div>
 
     <!-- Top Productos -->
@@ -176,144 +191,19 @@
 <!-- ========================================== -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
-<script>
-// ==========================================
-// GRÁFICO DE VENTAS POR MES (Líneas)
-// ==========================================
-const salesCtx = document.getElementById('salesChart').getContext('2d');
-new Chart(salesCtx, {
-  type: 'line',
-  data: {
-    labels: {{ months_labels|tojson }},
-    datasets: [{
-      label: 'Ingresos ($)',
-      data: {{ monthly_revenue|tojson }},
-      borderColor: '#9a5f28',
-      backgroundColor: 'rgba(154, 95, 40, 0.1)',
-      borderWidth: 3,
-      fill: true,
-      tension: 0.4,
-      pointBackgroundColor: '#9a5f28',
-      pointBorderColor: '#fff',
-      pointBorderWidth: 2,
-      pointRadius: 5,
-      pointHoverRadius: 7
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            return 'Ingresos: $' + context.parsed.y.toFixed(2);
-          }
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: function(value) {
-            return '$' + value;
-          }
-        }
-      }
-    }
-  }
-});
+<!-- Pasar datos a los gráficos via data attributes -->
+<canvas id="salesChart" height="250"
+        data-labels='{{ months_labels|tojson }}'
+        data-revenue='{{ monthly_revenue|tojson }}'></canvas>
 
-// ==========================================
-// GRÁFICO DE INGRESOS POR CATEGORÍA (Donut)
-// ==========================================
-const categoryCtx = document.getElementById('categoryChart').getContext('2d');
-new Chart(categoryCtx, {
-  type: 'doughnut',
-  data: {
-    labels: {{ category_labels|tojson }},
-    datasets: [{
-      data: {{ category_revenue|tojson }},
-      backgroundColor: [
-        '#9a5f28',
-        '#b87333',
-        '#6b3410',
-        '#3d1d08',
-        '#f9ebd9',
-        '#d4a574'
-      ],
-      borderWidth: 3,
-      borderColor: '#fff'
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        position: 'bottom',
-        labels: {
-          padding: 20,
-          usePointStyle: true
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            return context.label + ': $' + context.parsed.toFixed(2);
-          }
-        }
-      }
-    }
-  }
-});
+<canvas id="categoryChart" height="250"
+        data-labels='{{ category_labels|tojson }}'
+        data-revenue='{{ category_revenue|tojson }}'></canvas>
 
-// ==========================================
-// GRÁFICO DE ESTADOS DE PEDIDOS (Barras)
-// ==========================================
-const statusCtx = document.getElementById('statusChart').getContext('2d');
-new Chart(statusCtx, {
-  type: 'bar',
-  data: {
-    labels: {{ status_labels|tojson }},
-    datasets: [{
-      label: 'Cantidad de Pedidos',
-      data: {{ status_counts|tojson }},
-      backgroundColor: [
-        '#fbbf24',  // pending_payment
-        '#fbbf24',  // pending
-        '#3b82f6',  // paid
-        '#8b5cf6',  // preparing
-        '#6366f1',  // shipped
-        '#10b981',  // delivered
-        '#059669',  // completed
-        '#ef4444'   // cancelled
-      ],
-      borderWidth: 2,
-      borderRadius: 8
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          stepSize: 1
-        }
-      }
-    }
-  }
-});
-</script>
+<canvas id="statusChart" height="250"
+        data-labels='{{ status_labels|tojson }}'
+        data-counts='{{ status_counts|tojson }}'></canvas>
+
+<!-- Script externo de gráficos -->
+<script src="{{ url_for('static', filename='js/admin-charts.js') }}"></script>
 {% endblock %}
