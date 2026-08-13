@@ -21,7 +21,7 @@
 
     {# ==========================================
        CONTENIDO PRINCIPAL
-       ========================================== #}
+    ========================================== #}
     <main class="flex-1">
         {% block content %}{% endblock %}
     </main>
@@ -34,5 +34,8 @@
 
     {# Lógica del loading global #}
     <script src="{{ url_for('static', filename='js/loading.js') }}"></script>
+
+    {# ✅ Animación Fly to Cart #}
+    <script src="{{ url_for('static', filename='js/fly-to-cart.js') }}"></script>
 </body>
 </html>
