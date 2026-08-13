@@ -36,7 +36,7 @@
     // ============================================
     // 2. Loading para clicks en enlaces normales
     // ============================================
-    document.addEventListener('click', function(e) {
+        document.addEventListener('click', function(e) {
         const link = e.target.closest('a[href]');
         if (!link) return;
         const href = link.getAttribute('href');
@@ -48,9 +48,16 @@
             link.hasAttribute('hx-delete') ||
             link.hasAttribute('hx-put') ||
             link.getAttribute('target') === '_blank' ||
+            link.hasAttribute('download') ||
             (href.startsWith('http') && !href.includes(window.location.hostname))) {
             return;
         }
+        
+        // ✅ NO mostrar loader si es una descarga de archivo
+        const downloadExtensions = ['.csv', '.pdf', '.xlsx', '.xls', '.zip', '.doc', '.docx'];
+        const isDownload = downloadExtensions.some(ext => href.toLowerCase().includes(ext));
+        if (isDownload) return;
+        
         showLoader('Cargando página...');
     });
 

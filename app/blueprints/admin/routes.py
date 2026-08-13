@@ -1,5 +1,7 @@
 import os
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app
+import csv
+import io
+from flask import Response, Blueprint, render_template, request, flash, redirect, url_for, current_app
 from flask_login import login_required, current_user
 from functools import wraps
 from werkzeug.utils import secure_filename
@@ -646,4 +648,57 @@ def reject_review(review_id):
     db.session.commit()
     flash(f"❌ Reseña de {user_name} para {product_name} rechazada", "warning")
     return redirect(url_for("admin.reviews", status=request.args.get("status", "pending")))
+
+@admin_bp.route("/pedidos/exportar-csv")
+@admin_required
+def export_orders_csv():
+    """Exporta los pedidos a un archivo CSV compatible con Excel."""
+    status_filter = request.args.get("status")
+    query = Order.query
+    
+    # Respetar el filtro de estado si existe
+    if status_filter and status_filter != "all":
+        query = query.filter_by(status=status_filter)
+    
+    orders = query.order_by(Order.created_at.desc()).all()
+    
+    # Crear el archivo CSV en memoria
+    si = io.StringIO()
+    cw = csv.writer(si)
+    
+    # Encabezados de columnas
+    cw.writerow([
+        "ID Pedido", "Fecha", "Cliente", "Email", "Teléfono", 
+        "Estado", "Total", "Método de Pago", "Dirección", "Ciudad", "Código Postal"
+    ])
+    
+    # Filas de datos
+    for order in orders:
+        # Usamos getattr con valores por defecto para evitar errores si algún campo varía en tu modelo
+        nombre = getattr(order, 'customer_name', f"{getattr(order, 'first_name', '')} {getattr(order, 'last_name', '')}".strip())
+        fecha = order.created_at.strftime("%d/%m/%Y %H:%M") if order.created_at else ""
+        
+        cw.writerow([
+            order.id,
+            fecha,
+            nombre,
+            getattr(order, 'customer_email', ''),
+            getattr(order, 'customer_phone', ''),
+            order.status,
+            f"${order.total:.2f}" if order.total else "$0.00",
+            getattr(order, 'payment_method', 'N/A'),
+            getattr(order, 'shipping_address', ''),
+            getattr(order, 'shipping_city', ''),
+            getattr(order, 'shipping_zip', getattr(order, 'shipping_zip_code', ''))
+        ])
+        
+    output = si.getvalue()
+    si.close()
+    
+    # Retornar la respuesta como archivo descargable
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=pedidos.csv"}
+    )
 
