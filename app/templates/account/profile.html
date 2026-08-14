@@ -1,53 +1,80 @@
 {% extends "base.html" %}
-
 {% block title %}Mi Perfil | Marroquinería Artesanal{% endblock %}
-
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 py-12">
-  <h1 class="font-display text-4xl font-bold text-leather-900 mb-8">Mi Cuenta</h1>
+<div class="max-w-4xl mx-auto px-4 py-8 sm:py-12">
+    <h1 class="font-display text-3xl sm:text-4xl font-bold text-leather-900 mb-8">Mi Cuenta</h1>
 
-  <div class="bg-white rounded-xl shadow-sm p-8">
-    <div class="flex items-center gap-4 mb-8 pb-8 border-b border-gray-200">
-      <div class="w-16 h-16 bg-craft-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
-        {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
-      </div>
-      <div>
-        <h2 class="text-2xl font-bold text-leather-900">{{ current_user.full_name }}</h2>
-        <p class="text-leather-700">{{ current_user.email }}</p>
-        {% if current_user.is_admin %}
-          <span class="inline-block mt-2 px-3 py-1 bg-leather-900 text-white text-xs font-semibold rounded-full">Administrador</span>
-        {% endif %}
-      </div>
+    {# Tarjeta de perfil #}
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-8 mb-6">
+        <div class="flex items-center gap-4 sm:gap-5">
+            <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-craft-600 to-craft-500 rounded-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold flex-shrink-0">
+                {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
+            </div>
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-leather-900">{{ current_user.full_name }}</h2>
+                <p class="text-sm sm:text-base text-gray-500">{{ current_user.email }}</p>
+                {% if current_user.is_admin %}
+                <span class="inline-block mt-2 px-3 py-1 bg-leather-900 text-white text-xs font-semibold rounded-full">
+                    ⚙️ Administrador
+                </span>
+                {% endif %}
+            </div>
+        </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <a href="/cuenta/pedidos" class="flex items-center gap-4 p-6 border border-gray-200 rounded-xl hover:border-craft-600 hover:bg-leather-50 transition group">
-        <span class="text-3xl">📦</span>
-        <div>
-          <h3 class="font-bold text-leather-900 group-hover:text-craft-600">Mis Pedidos</h3>
-          <p class="text-sm text-gray-500">Revisa el estado de tus compras</p>
-        </div>
-      </a>
-      <a href="/cuenta/cambiar-password" class="block bg-white rounded-xl shadow-sm p-4 hover:shadow-md transition">
-  <div class="flex items-center justify-between">
-    <div class="flex items-center gap-3">
-      <span class="text-2xl">🔒</span>
-      <div>
-        <p class="font-semibold text-leather-900">Cambiar Contraseña</p>
-        <p class="text-sm text-leather-700">Actualiza tu contraseña de acceso</p>
-      </div>
+    {# Tarjetas de acceso rápido #}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <a href="/cuenta/pedidos" class="flex items-center gap-4 p-5 sm:p-6 bg-white border border-gray-100 rounded-2xl hover:border-craft-600 hover:shadow-md transition group">
+            <div class="w-12 h-12 bg-craft-600/10 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-craft-600/20 transition">
+                <span class="text-2xl">📦</span>
+            </div>
+            <div>
+                <h3 class="font-bold text-leather-900 group-hover:text-craft-600 transition">Mis Pedidos</h3>
+                <p class="text-xs sm:text-sm text-gray-500">Revisá el estado de tus compras</p>
+            </div>
+            <svg class="w-5 h-5 text-gray-300 group-hover:text-craft-600 ml-auto transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+
+        <a href="/cuenta/favoritos" class="flex items-center gap-4 p-5 sm:p-6 bg-white border border-gray-100 rounded-2xl hover:border-craft-600 hover:shadow-md transition group">
+            <div class="w-12 h-12 bg-red-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-red-100 transition">
+                <span class="text-2xl">❤️</span>
+            </div>
+            <div>
+                <h3 class="font-bold text-leather-900 group-hover:text-craft-600 transition">Mis Favoritos</h3>
+                <p class="text-xs sm:text-sm text-gray-500">Productos guardados</p>
+            </div>
+            <svg class="w-5 h-5 text-gray-300 group-hover:text-craft-600 ml-auto transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+
+        <a href="/cuenta/fidelizacion" class="flex items-center gap-4 p-5 sm:p-6 bg-white border border-gray-100 rounded-2xl hover:border-craft-600 hover:shadow-md transition group">
+            <div class="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-amber-100 transition">
+                <span class="text-2xl">🎁</span>
+            </div>
+            <div>
+                <h3 class="font-bold text-leather-900 group-hover:text-craft-600 transition">Mis Puntos</h3>
+                <p class="text-xs sm:text-sm text-gray-500">{{ current_user.loyalty_points }} puntos acumulados</p>
+            </div>
+            <svg class="w-5 h-5 text-gray-300 group-hover:text-craft-600 ml-auto transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
+
+        <a href="/cuenta/cambiar-password" class="flex items-center gap-4 p-5 sm:p-6 bg-white border border-gray-100 rounded-2xl hover:border-craft-600 hover:shadow-md transition group">
+            <div class="w-12 h-12 bg-gray-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-gray-100 transition">
+                <span class="text-2xl">🔒</span>
+            </div>
+            <div>
+                <h3 class="font-bold text-leather-900 group-hover:text-craft-600 transition">Cambiar Contraseña</h3>
+                <p class="text-xs sm:text-sm text-gray-500">Actualizá tu contraseña de acceso</p>
+            </div>
+            <svg class="w-5 h-5 text-gray-300 group-hover:text-craft-600 ml-auto transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+        </a>
     </div>
-    <span class="text-craft-600">→</span>
-  </div>
-</a>
-      <a href="/auth/logout" class="flex items-center gap-4 p-6 border border-gray-200 rounded-xl hover:border-red-500 hover:bg-red-50 transition group">
-        <span class="text-3xl">🚪</span>
-        <div>
-          <h3 class="font-bold text-leather-900 group-hover:text-red-600">Cerrar Sesión</h3>
-          <p class="text-sm text-gray-500">Salir de tu cuenta de forma segura</p>
-        </div>
-      </a>
+
+    {# Cerrar sesión #}
+    <div class="mt-6">
+        <a href="/auth/logout" class="flex items-center justify-center gap-2 w-full sm:w-auto sm:inline-flex px-6 py-3 border-2 border-red-200 text-red-600 rounded-2xl font-semibold hover:bg-red-50 hover:border-red-300 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+            Cerrar Sesión
+        </a>
     </div>
-  </div>
 </div>
 {% endblock %}

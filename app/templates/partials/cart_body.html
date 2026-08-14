@@ -1,71 +1,69 @@
-<table id="cart-table" class="w-full text-left">
-    <thead class="bg-gray-50 border-b border-gray-200">
-        <tr>
-            <th class="py-4 px-4 font-semibold text-leather-900">Producto</th>
-            <th class="py-4 px-4 font-semibold text-leather-900">Cantidad</th>
-            <th class="py-4 px-4 font-semibold text-leather-900">Subtotal</th>
-            <th class="py-4 px-4"></th>
-        </tr>
-    </thead>
-    <tbody>
+<div id="cart-table">
+    {% if cart.items %}
+    <div class="divide-y divide-gray-100">
         {% for item in cart.items %}
-        <tr id="row-{{ item.product.id }}" class="border-b border-gray-100">
-            <td class="py-4 px-4">
-                <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 bg-leather-100 rounded-lg flex items-center justify-center text-2xl">👜</div>
-                    <div>
-                        <h4 class="font-semibold text-leather-900">{{ item.product.name }}</h4>
-                        <p class="text-sm text-gray-500">${{ "%.2f"|format(item.product.price) }} c/u</p>
+        <div id="row-{{ item.product.id }}" class="p-4 sm:p-5 flex gap-3 sm:gap-4">
+
+            {# Imagen del producto #}
+            <a href="/tienda/producto/{{ item.product.slug }}" class="flex-shrink-0">
+                {% if item.product.image_url %}
+                <img src="{{ item.product.image_url }}" alt="{{ item.product.name }}"
+                     class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover">
+                {% else %}
+                <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-leather-100 flex items-center justify-center text-3xl">👜</div>
+                {% endif %}
+            </a>
+
+            {# Info + controles #}
+            <div class="flex-1 min-w-0 flex flex-col justify-between">
+                <div>
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="min-w-0">
+                            <h4 class="font-semibold text-leather-900 text-sm sm:text-base truncate">
+                                <a href="/tienda/producto/{{ item.product.slug }}" class="hover:text-craft-600 transition">
+                                    {{ item.product.name }}
+                                </a>
+                            </h4>
+                            <p class="text-xs text-gray-500 mt-0.5">${{ "%.2f"|format(item.product.price) }} c/u</p>
+                        </div>
+                        {# Eliminar #}
+                        <button hx-post="/checkout/carrito/remove/{{ item.product.id }}"
+                                hx-target="#cart-table" hx-swap="outerHTML"
+                                class="flex-shrink-0 text-gray-400 hover:text-red-500 transition p-1"
+                                title="Eliminar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0115.135 21H8.865a2 2 0 01-1.994-1.858L8 7m5 0v-2a2 2 0 00-2-2H9a2 2 0 00-2 2v2m4 0H8m5 0h1.5a1.5 1.5 0 011.5 1.5v9a1.5 1.5 0 01-1.5 1.5"/></svg>
+                        </button>
                     </div>
                 </div>
-            </td>
-            <td class="py-4 px-4">
-                <form hx-post="/checkout/carrito/update" hx-target="#cart-table" hx-swap="outerHTML"
-                      class="flex items-center border border-gray-300 rounded-lg w-max bg-white">
-                    <input type="hidden" name="product_id" value="{{ item.product.id }}">
-                    <button type="submit" name="quantity" value="{{ item.quantity - 1 }}"
-                            class="px-3 py-1 hover:bg-gray-100 text-leather-900"
-                            {% if item.quantity <= 1 %}disabled{% endif %}>−</button>
-                    <span class="px-3 py-1 font-medium text-leather-900 min-w-[2rem] text-center">{{ item.quantity }}</span>
-                    <button type="submit" name="quantity" value="{{ item.quantity + 1 }}"
-                            class="px-3 py-1 hover:bg-gray-100 text-leather-900">+</button>
-                </form>
-            </td>
-            <td class="py-4 px-4 font-bold text-leather-900">
-                ${{ "%.2f"|format(item.subtotal) }}
-            </td>
-            <td class="py-4 px-4 text-right">
-                <button hx-post="/checkout/carrito/remove/{{ item.product.id }}"
-                        hx-target="#cart-table" hx-swap="outerHTML"
-                        class="text-red-500 hover:text-red-700 text-sm font-medium underline">
-                    Eliminar
-                </button>
-            </td>
-        </tr>
-        {% else %}
-        <tr>
-            <td colspan="4" class="py-12 text-center text-gray-500">
-                Tu carrito está vacío. <a href="/tienda" class="text-craft-600 underline">Ir a la tienda</a>
-            </td>
-        </tr>
+
+                {# Cantidad + subtotal #}
+                <div class="flex items-center justify-between mt-3">
+                    <form hx-post="/checkout/carrito/update" hx-target="#cart-table" hx-swap="outerHTML"
+                          class="flex items-center border border-gray-300 rounded-lg bg-white">
+                        <input type="hidden" name="product_id" value="{{ item.product.id }}">
+                        <button type="submit" name="quantity" value="{{ item.quantity - 1 }}"
+                                class="px-3 py-1.5 hover:bg-gray-100 rounded-l-lg text-leather-900 font-medium"
+                                {% if item.quantity <= 1 %}disabled{% endif %}>−</button>
+                        <span class="px-3 py-1.5 font-semibold text-leather-900 text-sm min-w-[2rem] text-center">{{ item.quantity }}</span>
+                        <button type="submit" name="quantity" value="{{ item.quantity + 1 }}"
+                                class="px-3 py-1.5 hover:bg-gray-100 rounded-r-lg text-leather-900 font-medium"
+                                {% if item.quantity >= item.product.stock %}disabled{% endif %}>+</button>
+                    </form>
+                    <span class="font-bold text-leather-900 text-sm sm:text-base">${{ "%.2f"|format(item.subtotal) }}</span>
+                </div>
+            </div>
+        </div>
         {% endfor %}
-    </tbody>
-    <tfoot class="bg-gray-50">
-        <tr>
-            <td colspan="2" class="py-4 px-4 text-right font-semibold text-leather-900">Total:</td>
-            <td colspan="2" class="py-4 px-4 font-bold text-xl text-craft-600">
-                ${{ "%.2f"|format(cart.total_price) }}
-            </td>
-        </tr>
-        <tr>
-            <td colspan="4" class="py-4 px-4 text-right">
-                {% if cart.total_items > 0 %}
-                <a href="/checkout/checkout"
-                   class="bg-leather-900 text-white px-8 py-3 rounded-lg font-semibold hover:bg-craft-600 transition inline-block">
-                    Finalizar Compra
-                </a>
-                {% endif %}
-            </td>
-        </tr>
-    </tfoot>
-</table>
+    </div>
+    {% else %}
+    {# Empty state #}
+    <div class="py-16 sm:py-20 text-center px-4">
+        <p class="text-5xl sm:text-6xl mb-4">🛒</p>
+        <h3 class="font-display text-xl sm:text-2xl font-bold text-leather-900 mb-2">Tu carrito está vacío</h3>
+        <p class="text-leather-700 text-sm sm:text-base mb-6">Explorá nuestra tienda y encontrá piezas únicas</p>
+        <a href="/tienda" class="inline-block bg-craft-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-craft-500 transition text-sm">
+            Ir a la Tienda
+        </a>
+    </div>
+    {% endif %}
+</div>

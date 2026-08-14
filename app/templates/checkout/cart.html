@@ -1,14 +1,70 @@
 {% extends "base.html" %}
 {% block title %}Carrito de Compras | Marroquinería Artesanal{% endblock %}
 {% block content %}
-<div class="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-12">
-    <h1 class="font-display text-2xl sm:text-3xl font-bold text-leather-900 mb-4 sm:mb-8">
-        Tu Carrito de Compras
-    </h1>
+<div class="max-w-6xl mx-auto px-3 sm:px-4 py-6 sm:py-10">
 
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div class="table-responsive">
-            {% include "partials/cart_body.html" %}
+    {# Encabezado #}
+    <div class="mb-6 sm:mb-8">
+        <h1 class="font-display text-2xl sm:text-3xl font-bold text-leather-900 mb-1">Tu Carrito</h1>
+        <p class="text-leather-700 text-sm sm:text-base">Revisá tus productos antes de finalizar la compra</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+
+        {# ===== LISTA DE PRODUCTOS ===== #}
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                {% include "partials/cart_body.html" %}
+            </div>
+        </div>
+
+        {# ===== RESUMEN (sticky en desktop) ===== #}
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 sm:p-6 lg:sticky lg:top-24">
+                <h2 class="font-display text-lg sm:text-xl font-bold text-leather-900 mb-4">Resumen del pedido</h2>
+
+                <div class="space-y-3 mb-5">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-leather-700">Subtotal</span>
+                        <span class="font-semibold text-leather-900">${{ "%.2f"|format(cart.total_price) }}</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-leather-700">Envío</span>
+                        <span class="font-semibold text-leather-900">Se calcula en el checkout</span>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-4 mb-6">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-leather-900">Total</span>
+                        <span class="text-xl sm:text-2xl font-bold text-craft-600">${{ "%.2f"|format(cart.total_price) }}</span>
+                    </div>
+                </div>
+
+                {% if cart.total_items > 0 %}
+                <a href="/checkout/checkout"
+                   class="block w-full bg-craft-600 text-white font-semibold py-3.5 rounded-xl hover:bg-craft-500 transition text-center text-sm sm:text-base shadow-lg shadow-craft-600/20">
+                    Finalizar Compra
+                </a>
+                {% endif %}
+
+                <a href="/tienda"
+                   class="block w-full text-center text-craft-600 font-semibold py-3 mt-3 text-sm hover:text-craft-500 transition">
+                    ← Seguir comprando
+                </a>
+
+                {# Confianza #}
+                <div class="mt-6 pt-5 border-t border-gray-100 space-y-2.5">
+                    <div class="flex items-center gap-2 text-xs text-leather-700">
+                        <svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        Pago 100% seguro con Mercado Pago
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-leather-700">
+                        <svg class="w-4 h-4 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                        Datos protegidos y encriptados
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

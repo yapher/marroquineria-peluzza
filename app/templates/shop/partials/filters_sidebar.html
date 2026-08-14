@@ -1,65 +1,76 @@
 <!-- ========================================== -->
-<!-- SIDEBAR DE FILTROS                         -->
+<!-- SIDEBAR DE FILTROS - Mobile First          -->
 <!-- ========================================== -->
 <aside class="lg:w-64 flex-shrink-0">
-    <div class="bg-white rounded-xl shadow-sm p-6 sticky top-24">
-        <h3 class="font-display text-xl font-bold text-leather-900 mb-4">Filtros</h3>
-        
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 lg:sticky lg:top-24">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="font-display text-lg sm:text-xl font-bold text-leather-900">Filtros</h3>
+            <a href="/tienda" class="text-xs text-craft-600 hover:text-craft-500 font-semibold hover:underline transition">
+                Limpiar todo
+            </a>
+        </div>
+
         <!-- Búsqueda -->
         <div class="mb-6">
             <label class="block text-sm font-semibold text-leather-900 mb-2">Buscar</label>
-            <form hx-get="/tienda" hx-target="#product-grid" hx-trigger="input changed delay:300ms" hx-indicator="#search-spinner">
-                <input
-                    type="text"
-                    name="q"
-                    value="{{ search }}"
-                    placeholder="Ej: billetera, bolso..."
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-craft-600 focus:border-transparent"
-                >
-                <span id="search-spinner" class="htmx-indicator text-xs text-gray-500 mt-1">Buscando...</span>
+            <form hx-get="/tienda" hx-target="#product-grid" hx-trigger="input changed delay:400ms, search" hx-indicator="#search-spinner">
+                <div class="relative">
+                    <input type="search" name="q" value="{{ search }}"
+                           placeholder="Billetera, bolso..."
+                           class="w-full pl-9 pr-8 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-craft-600 focus:border-craft-600 focus:outline-none">
+                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <span id="search-spinner" class="htmx-indicator absolute right-3 top-1/2 -translate-y-1/2 text-craft-600 text-xs">⟳</span>
+                </div>
             </form>
         </div>
 
         <!-- Categorías -->
         <div class="mb-6">
             <label class="block text-sm font-semibold text-leather-900 mb-2">Categorías</label>
-            <ul class="space-y-2">
-                <li>
-                    <a href="/tienda"
-                       class="block px-3 py-2 rounded-lg text-sm {% if not current_category %}bg-craft-600 text-white font-semibold{% else %}hover:bg-gray-100 text-leather-900{% endif %}">
-                        Todas
-                    </a>
-                </li>
+            <div class="space-y-1.5">
+                <a href="/tienda{% if search %}?q={{ search }}{% endif %}"
+                   class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
+                          {% if not current_category %}bg-craft-600 text-white font-semibold shadow-sm{% else %}text-leather-900 hover:bg-leather-50 hover:text-craft-600{% endif %}">
+                    <span>Todas</span>
+                </a>
                 {% for cat in categories %}
-                <li>
-                    <a href="/tienda?categoria={{ cat.slug }}&sort={{ current_sort }}{% if search %}&q={{ search }}{% endif %}"
-                       class="block px-3 py-2 rounded-lg text-sm {% if current_category == cat.slug %}bg-craft-600 text-white font-semibold{% else %}hover:bg-gray-100 text-leather-900{% endif %}">
+                <a href="/tienda?categoria={{ cat.slug }}{% if search %}&q={{ search }}{% endif %}"
+                   class="flex items-center justify-between px-3 py-2 rounded-lg text-sm transition
+                          {% if current_category == cat.slug %}bg-craft-600 text-white font-semibold shadow-sm{% else %}text-leather-900 hover:bg-leather-50 hover:text-craft-600{% endif %}">
+                    <span class="flex items-center gap-2">
+                        {% if cat.slug == 'billeteras' %}👛
+                        {% elif cat.slug == 'bolsos' %}👜
+                        {% elif cat.slug == 'cinturones' %}🎗️
+                        {% else %}🏷️{% endif %}
                         {{ cat.name }}
-                    </a>
-                </li>
+                    </span>
+                    <span class="text-xs {% if current_category == cat.slug %}text-white/80{% else %}text-gray-400{% endif %}">
+                        {{ cat.products|selectattr('active')|list|length }}
+                    </span>
+                </a>
                 {% endfor %}
-            </ul>
+            </div>
         </div>
 
         <!-- Rango de precios -->
         <div class="mb-6">
             <label class="block text-sm font-semibold text-leather-900 mb-2">Precio</label>
-            <form hx-get="/tienda" hx-target="#product-grid" hx-trigger="change" class="space-y-2">
-                <input type="hidden" name="q" value="{{ search }}">
-                <input type="hidden" name="sort" value="{{ current_sort }}">
+            <form hx-get="/tienda" hx-target="#product-grid" hx-trigger="change" class="space-y-3">
+                {% if search %}<input type="hidden" name="q" value="{{ search }}">{% endif %}
                 {% if current_category %}<input type="hidden" name="categoria" value="{{ current_category }}">{% endif %}
+                <input type="hidden" name="sort" value="{{ current_sort }}">
                 <div class="flex gap-2">
-                    <input type="number" name="min_price" value="{{ min_price or '' }}" placeholder="Min"
-                           class="w-1/2 px-2 py-1 border border-gray-300 rounded text-sm">
-                    <input type="number" name="max_price" value="{{ max_price or '' }}" placeholder="Max"
-                           class="w-1/2 px-2 py-1 border border-gray-300 rounded text-sm">
+                    <div class="flex-1">
+                        <input type="number" name="min_price" value="{{ min_price or '' }}" placeholder="Min"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-craft-600 focus:border-craft-600 focus:outline-none">
+                    </div>
+                    <span class="text-gray-400 self-center">—</span>
+                    <div class="flex-1">
+                        <input type="number" name="max_price" value="{{ max_price or '' }}" placeholder="Max"
+                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-craft-600 focus:border-craft-600 focus:outline-none">
+                    </div>
                 </div>
             </form>
         </div>
-
-        <!-- Reset filtros -->
-        <a href="/tienda" class="block w-full text-center px-4 py-2 border border-leather-900 text-leather-900 rounded-lg text-sm hover:bg-leather-900 hover:text-white transition">
-            Limpiar filtros
-        </a>
     </div>
 </aside>
