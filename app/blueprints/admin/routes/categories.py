@@ -1,5 +1,5 @@
 """Rutas para gestión de categorías."""
-from flask import render_template, flash, redirect, url_for
+from flask import render_template, flash, redirect, url_for, abort
 from .. import admin_bp
 from ....models import Category
 from ....forms.admin_forms import CategoryForm
@@ -39,8 +39,10 @@ def category_new():
 @admin_bp.route("/categorias/<int:category_id>/editar", methods=["GET", "POST"])
 @admin_required
 def category_edit(category_id):
-    """Edita una categoría existente."""
-    category = Category.query.get_or_404(category_id)
+    category = db.session.get(Category, category_id)
+    if category is None:
+        abort(404)
+    
     form = CategoryForm(obj=category)
     if form.validate_on_submit():
         category.name = form.name.data

@@ -12,6 +12,7 @@ from ..config.constants import (
     REVIEWABLE_ORDER_STATUSES,
     get_next_loyalty_level,
 )
+from ..utils.time import utc_now
 
 
 class User(UserMixin, db.Model):
@@ -23,7 +24,7 @@ class User(UserMixin, db.Model):
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
     # Sistema de fidelización
     loyalty_points: Mapped[int] = mapped_column(Integer, default=0)
@@ -34,14 +35,17 @@ class User(UserMixin, db.Model):
     # RELACIONES
     # ==========================================
     orders: Mapped[list["Order"]] = relationship(back_populates="user")
+
     wishlist_items: Mapped[list["Wishlist"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan"
     )
+
     reviews: Mapped[list["Review"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan"
     )
+
     loyalty_transactions: Mapped[list["LoyaltyTransaction"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
@@ -51,6 +55,7 @@ class User(UserMixin, db.Model):
     # ==========================================
     # MÉTODOS Y PROPIEDADES
     # ==========================================
+
     @property
     def full_name(self) -> str:
         """Devuelve el nombre completo del usuario."""
@@ -91,6 +96,7 @@ class User(UserMixin, db.Model):
     # ==========================================
     # SISTEMA DE FIDELIZACIÓN
     # ==========================================
+
     @property
     def loyalty_level_display(self) -> str:
         """Nombre del nivel en español."""
@@ -120,12 +126,10 @@ class User(UserMixin, db.Model):
         next_level = self.next_level
         if next_level["points"] is None:
             return 100.0
-
         current_threshold = LOYALTY_LEVELS.get(self.loyalty_level, {}).get("threshold", 0)
         range_size = next_level["points"] - current_threshold
         if range_size == 0:
             return 100.0
-
         progress = ((self.loyalty_points - current_threshold) / range_size) * 100
         return min(100.0, max(0.0, progress))
 
@@ -136,7 +140,7 @@ class User(UserMixin, db.Model):
 
         self.loyalty_points += points
 
-        # Verificar si subió de nivel (solo sube, nunca baja → mismo comportamiento original)
+        # Verificar si subió de nivel (solo sube, nunca baja)
         old_level = self.loyalty_level
         if self.loyalty_points >= LOYALTY_LEVELS[LoyaltyLevel.PLATINUM]["threshold"]:
             self.loyalty_level = LoyaltyLevel.PLATINUM
@@ -155,4 +159,4 @@ class User(UserMixin, db.Model):
         )
         db.session.add(transaction)
 
-        return old_level != self.loyalty_level  # Retorna True si subió de nivel
+        return old_level != self.loyalty_level

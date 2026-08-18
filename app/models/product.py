@@ -5,6 +5,7 @@ from sqlalchemy import String, Text, Numeric, Integer, ForeignKey, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from slugify import slugify
 from ..extensions import db
+from ..utils.time import utc_now
 
 
 class Product(db.Model):
@@ -23,8 +24,8 @@ class Product(db.Model):
     is_handmade: Mapped[bool] = mapped_column(Boolean, default=True)
     featured: Mapped[bool] = mapped_column(Boolean, default=False)
     active: Mapped[bool] = mapped_column(Boolean, default=True)
-    image_url: Mapped[str | None] = mapped_column(String(500)) 
-    created_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)
+    image_url: Mapped[str | None] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(default=utc_now)
 
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
     category: Mapped["Category"] = relationship(back_populates="products")
@@ -32,6 +33,7 @@ class Product(db.Model):
     images: Mapped[list["ProductImage"]] = relationship(
         back_populates="product", cascade="all, delete-orphan"
     )
+
     variants: Mapped[list["ProductVariant"]] = relationship(
         back_populates="product", cascade="all, delete-orphan"
     )
@@ -89,7 +91,6 @@ class ProductImage(db.Model):
     position: Mapped[int] = mapped_column(Integer, default=0)
     is_primary: Mapped[bool] = mapped_column(Boolean, default=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
-
     product: Mapped["Product"] = relationship(back_populates="images")
 
 
@@ -102,5 +103,4 @@ class ProductVariant(db.Model):
     price_adjustment: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
     stock: Mapped[int] = mapped_column(Integer, default=0)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
-
     product: Mapped["Product"] = relationship(back_populates="variants")

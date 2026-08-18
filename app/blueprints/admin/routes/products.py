@@ -1,6 +1,6 @@
 # app/blueprints/admin/routes/products.py
 """Rutas para gestión de productos e imágenes."""
-from flask import render_template, request, flash, redirect, url_for, current_app
+from flask import render_template, request, flash, redirect, url_for, current_app, abort
 from .. import admin_bp
 from ....models import Product, ProductImage
 from ....forms.admin_forms import ProductForm
@@ -95,8 +95,10 @@ def product_new():
 @admin_bp.route("/productos/<int:product_id>/editar", methods=["GET", "POST"])
 @admin_required
 def product_edit(product_id):
-    """Edita un producto existente."""
-    product = Product.query.get_or_404(product_id)
+    product = db.session.get(Product, product_id)
+    if product is None:
+        abort(404)
+    
     form = ProductForm(obj=product)
 
     if form.validate_on_submit():
@@ -156,8 +158,10 @@ def product_edit(product_id):
 @admin_bp.route("/productos/<int:product_id>/eliminar", methods=["POST"])
 @admin_required
 def product_delete(product_id):
-    """Desactiva un producto (soft delete)."""
-    product = Product.query.get_or_404(product_id)
+    product = db.session.get(Product, product_id)
+    if product is None:
+        abort(404)
+    
     product.active = False
     product.featured = False
     db.session.commit()
@@ -172,10 +176,11 @@ def product_delete(product_id):
 @admin_bp.route("/productos/<int:product_id>/imagenes/<int:image_id>/eliminar", methods=["POST"])
 @admin_required
 def product_image_delete(product_id, image_id):
-    """Elimina una imagen de la galería."""
-    product = Product.query.get_or_404(product_id)
+    product = db.session.get(Product, product_id)
+    if product is None:
+        abort(404)
     image = ProductImage.query.filter_by(id=image_id, product_id=product_id).first_or_404()
-
+    # ... (resto del código igual)
     delete_image(image.url)
     db.session.delete(image)
     db.session.commit()
@@ -187,10 +192,11 @@ def product_image_delete(product_id, image_id):
 @admin_bp.route("/productos/<int:product_id>/imagenes/<int:image_id>/principal", methods=["POST"])
 @admin_required
 def product_image_set_primary(product_id, image_id):
-    """Intercambia la imagen principal con una de la galería."""
-    product = Product.query.get_or_404(product_id)
+    product = db.session.get(Product, product_id)
+    if product is None:
+        abort(404)
     image = ProductImage.query.filter_by(id=image_id, product_id=product_id).first_or_404()
-
+    # ... (resto del código igual)
     set_primary_image(product, image)
 
     return redirect(url_for("admin.product_edit", product_id=product.id))

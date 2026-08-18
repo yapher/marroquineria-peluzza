@@ -1,5 +1,7 @@
-import os
+# app/__init__.py
+"""Factory principal de la aplicación Flask."""
 from flask import Flask, flash, redirect, request, url_for
+
 from .extensions import db, migrate, login_manager, csrf, mail, cache
 
 
@@ -8,6 +10,8 @@ def create_app(config_name='development'):
 
     if config_name == 'production':
         app.config.from_object('config.ProductionConfig')
+    elif config_name == 'testing':
+        app.config.from_object('config.TestingConfig')
     else:
         app.config.from_object('config.DevelopmentConfig')
 
@@ -18,6 +22,7 @@ def create_app(config_name='development'):
     mail.init_app(app)
     cache.init_app(app)
 
+    # Configuración de login (único lugar, no duplicar en extensions.py)
     login_manager.login_view = 'auth.login'
     login_manager.login_message = 'Por favor, inicia sesión para acceder a esta página.'
     login_manager.login_message_category = 'info'
@@ -49,7 +54,7 @@ def create_app(config_name='development'):
 
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
 
     @app.context_processor
     def inject_globals():

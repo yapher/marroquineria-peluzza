@@ -1,22 +1,21 @@
 # app/blueprints/admin/routes/orders.py
 """Rutas para gestión de pedidos."""
-from flask import render_template, request, flash, redirect, url_for, Response
+from flask import render_template, request, flash, redirect, url_for, Response, current_app, abort 
+
 from .. import admin_bp
 from ....models import Order, Product, User, Coupon
 from ....extensions import db
 from ....services.loyalty_service import award_points_for_order
 from ....services.email_service import send_order_status_update
 from ....config.constants import OrderStatus, ORDER_STATUS_META
+from ....utils.time import utc_now
+from ....utils.csv_export import orders_to_csv
 from . import admin_required
-from datetime import datetime
-import csv
-import io
 
 
 # ============================================
 # LISTADO Y DETALLE
 # ============================================
-
 @admin_bp.route("/pedidos")
 @admin_required
 def orders():
@@ -33,26 +32,33 @@ def orders():
     for status_key in ORDER_STATUS_META:
         stats[status_key] = Order.query.filter_by(status=status_key).count()
 
-    return render_template("admin/orders.html", orders=orders_list, stats=stats, current_status=status_filter or "all")
+    return render_template(
+        "admin/orders.html",
+        orders=orders_list,
+        stats=stats,
+        current_status=status_filter or "all"
+    )
 
 
 @admin_bp.route("/pedidos/<int:order_id>")
 @admin_required
 def order_detail(order_id):
-    """Muestra el detalle de un pedido."""
-    order = Order.query.get_or_404(order_id)
+    order = db.session.get(Order, order_id)
+    if order is None:
+        abort(404)
     return render_template("admin/order_detail.html", order=order)
 
 
 # ============================================
 # CAMBIO DE ESTADO
 # ============================================
-
 @admin_bp.route("/pedidos/<int:order_id>/cambiar-estado", methods=["POST"])
 @admin_required
 def order_change_status(order_id):
-    """Cambia el estado de un pedido y notifica al cliente."""
-    order = Order.query.get_or_404(order_id)
+    order = db.session.get(Order, order_id)
+    if order is None:
+        abort(404)
+    
     new_status = request.form.get("status")
     tracking_number = request.form.get("tracking_number", "").strip()
     notes = request.form.get("admin_notes", "").strip()
@@ -68,21 +74,24 @@ def order_change_status(order_id):
         order.tracking_number = tracking_number
 
     if notes:
+        now_str = utc_now().strftime('%d/%m/%Y %H:%M')
         if order.admin_notes:
-            order.admin_notes += f"\n[{datetime.utcnow().strftime('%d/%m/%Y %H:%M')}] {notes}"
+            order.admin_notes += f"\n[{now_str}] {notes}"
         else:
-            order.admin_notes = f"[{datetime.utcnow().strftime('%d/%m/%Y %H:%M')}] {notes}"
+            order.admin_notes = f"[{now_str}] {notes}"
 
     # Lógica de negocio según el estado
     if new_status == OrderStatus.PAID and old_status in (OrderStatus.PENDING_PAYMENT, OrderStatus.PENDING):
         if order.user_id:
-            user = User.query.get(order.user_id)
+            user = db.session.get(User, order.user_id)
             if user:
                 award_points_for_order(order, user)
+
         for item in order.items:
-            product = Product.query.get(item.product_id)
+            product = db.session.get(Product, item.product_id)
             if product:
                 product.stock -= item.quantity
+
         if order.coupon_code:
             coupon = Coupon.query.filter_by(code=order.coupon_code).first()
             if coupon:
@@ -90,7 +99,7 @@ def order_change_status(order_id):
 
     if new_status == OrderStatus.CANCELLED and old_status in (OrderStatus.PAID, OrderStatus.PREPARING, OrderStatus.SHIPPED):
         for item in order.items:
-            product = Product.query.get(item.product_id)
+            product = db.session.get(Product, item.product_id)
             if product:
                 product.stock += item.quantity
 
@@ -101,7 +110,6 @@ def order_change_status(order_id):
         send_order_status_update(order, old_status, new_status)
         flash(f"✅ Estado actualizado y email enviado a {order.customer_email}", "success")
     except Exception as e:
-        from flask import current_app
         current_app.logger.error(f"Error enviando email: {e}")
         flash("✅ Estado actualizado (pero no se pudo enviar el email)", "warning")
 
@@ -111,7 +119,6 @@ def order_change_status(order_id):
 # ============================================
 # EXPORTAR A CSV
 # ============================================
-
 @admin_bp.route("/pedidos/exportar-csv")
 @admin_required
 def export_orders_csv():
@@ -122,38 +129,8 @@ def export_orders_csv():
     if status_filter and status_filter != "all":
         query = query.filter_by(status=status_filter)
 
-    orders = query.order_by(Order.created_at.desc()).all()
-
-    # Crear el archivo CSV en memoria
-    si = io.StringIO()
-    cw = csv.writer(si)
-
-    # Encabezados
-    cw.writerow([
-        "ID Pedido", "Fecha", "Cliente", "Email", "Teléfono",
-        "Estado", "Total", "Método de Pago", "Dirección", "Ciudad", "Código Postal"
-    ])
-
-    # Filas de datos
-    for order in orders:
-        nombre = getattr(order, 'customer_name', f"{getattr(order, 'first_name', '')} {getattr(order, 'last_name', '')}".strip())
-        fecha = order.created_at.strftime("%d/%m/%Y %H:%M") if order.created_at else ""
-        cw.writerow([
-            order.id,
-            fecha,
-            nombre,
-            getattr(order, 'customer_email', ''),
-            getattr(order, 'customer_phone', ''),
-            order.status,
-            f"${order.total:.2f}" if order.total else "$0.00",
-            getattr(order, 'payment_method', 'N/A'),
-            getattr(order, 'shipping_address', ''),
-            getattr(order, 'shipping_city', ''),
-            getattr(order, 'shipping_zip', getattr(order, 'shipping_zip_code', ''))
-        ])
-
-    output = si.getvalue()
-    si.close()
+    orders_list = query.order_by(Order.created_at.desc()).all()
+    output = orders_to_csv(orders_list)
 
     return Response(
         output,

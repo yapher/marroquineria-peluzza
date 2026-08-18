@@ -1,7 +1,9 @@
+# app/models/wishlist.py
 from datetime import datetime
 from sqlalchemy import Integer, ForeignKey, DateTime, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..extensions import db
+from ..utils.time import utc_now
 
 
 class Wishlist(db.Model):
@@ -10,9 +12,9 @@ class Wishlist(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"))
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
-    # ✅ RELACIONES (faltaban estas dos líneas)
+    # ✅ RELACIONES
     user: Mapped["User"] = relationship(back_populates="wishlist_items")
     product: Mapped["Product"] = relationship()
 

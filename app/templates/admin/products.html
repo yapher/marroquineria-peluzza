@@ -1,11 +1,11 @@
 {% extends "layouts/admin.html" %}
 {% block title %}Productos | Panel Admin{% endblock %}
-
 {% block admin_content %}
 <!-- ✅ VOLVER AL PANEL -->
 <div class="mb-4">
     <a href="/admin" class="text-craft-600 hover:underline text-sm">← Volver al Panel</a>
 </div>
+
 <div class="flex items-center justify-between mb-8">
     <div>
         <h1 class="font-display text-4xl font-bold text-leather-900">Productos</h1>
@@ -64,7 +64,7 @@
                 </td>
                 <td class="py-4 px-4 text-right">
                     <a href="/admin/productos/{{ product.id }}/editar" class="text-craft-600 hover:underline text-sm mr-3">Editar</a>
-                    <form method="POST" action="/admin/productos/{{ product.id }}/eliminar" class="inline" onsubmit="return confirm('¿Eliminar este producto?')">
+                    <form method="POST" action="/admin/productos/{{ product.id }}/eliminar" class="inline" data-confirm="¿Eliminar este producto?">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button type="submit" class="text-red-600 hover:underline text-sm">Eliminar</button>
                     </form>

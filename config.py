@@ -3,6 +3,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent
 
+
 class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -10,7 +11,7 @@ class Config:
 
     # Subida de imágenes
     UPLOAD_FOLDER = str(BASE_DIR / "app" / "static" / "img" / "products")
-    MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB total (para permitir múltiples imágenes)
+    MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB total
     ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'webp'}
 
     # Galería de imágenes por producto
@@ -24,10 +25,16 @@ class Config:
     MAIL_USE_SSL = os.getenv("MAIL_USE_SSL", "False").lower() == "true"
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
-    MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", "Marroquinería Artesanal <marroquineriapeluzza@gmail.com>")
-    
-    # ✅ Email del administrador para recibir alertas de nuevos pedidos
-    ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", os.getenv("MAIL_USERNAME", "marroquineriapeluzza@gmail.com"))
+    MAIL_DEFAULT_SENDER = os.getenv(
+        "MAIL_DEFAULT_SENDER",
+        "Marroquinería Artesanal <marroquineriapeluzza@gmail.com>"
+    )
+
+    # Email del administrador para recibir alertas de nuevos pedidos
+    ADMIN_EMAIL = os.getenv(
+        "ADMIN_EMAIL",
+        os.getenv("MAIL_USERNAME", "marroquineriapeluzza@gmail.com")
+    )
 
     # Cloudinary
     CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
@@ -37,27 +44,41 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'dev.db'}")
+    SQLALCHEMY_DATABASE_URI = os.getenv(
+        "DATABASE_URL", f"sqlite:///{BASE_DIR / 'dev.db'}"
+    )
     MAIL_SUPPRESS_SEND = False
 
 
 class ProductionConfig(Config):
     DEBUG = False
+
     db_url = os.getenv("DATABASE_URL")
     if db_url and db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql+psycopg://", 1)
     elif db_url and db_url.startswith("postgresql://"):
         db_url = db_url.replace("postgresql://", "postgresql+psycopg://", 1)
-    
+
     SQLALCHEMY_DATABASE_URI = db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {
         "pool_pre_ping": True,
         "pool_recycle": 300,
     }
+
     SESSION_COOKIE_SECURE = True
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
+
     STATIC_URL = "/static/"
     STATIC_ROOT = str(BASE_DIR / "staticfiles")
     PREFERRED_URL_SCHEME = "https"
+
+
+class TestingConfig(Config):
+    TESTING = True
+    DEBUG = True
+    SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
+    WTF_CSRF_ENABLED = False
+    MAIL_SUPPRESS_SEND = True
+    SERVER_NAME = "localhost.test"

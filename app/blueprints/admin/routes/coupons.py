@@ -1,11 +1,10 @@
 """Rutas para gestión de cupones de descuento."""
-from flask import render_template, request, flash, redirect, url_for
+from flask import render_template, request, flash, redirect, url_for, abort
 from .. import admin_bp
 from ....models import Coupon
 from ....forms.coupon_forms import CouponForm
 from ....extensions import db
 from . import admin_required, _get_bool
-
 
 @admin_bp.route("/cupones")
 @admin_required
@@ -13,7 +12,6 @@ def coupons():
     """Lista todos los cupones."""
     coupons = Coupon.query.order_by(Coupon.created_at.desc()).all()
     return render_template("admin/coupons.html", coupons=coupons)
-
 
 @admin_bp.route("/cupones/nuevo", methods=["GET", "POST"])
 @admin_required
@@ -42,14 +40,14 @@ def coupon_new():
     
     return render_template("admin/coupon_form.html", form=form, title="Nuevo Cupón")
 
-
 @admin_bp.route("/cupones/<int:coupon_id>/editar", methods=["GET", "POST"])
 @admin_required
 def coupon_edit(coupon_id):
-    """Edita un cupón existente."""
-    coupon = Coupon.query.get_or_404(coupon_id)
-    form = CouponForm(obj=coupon)
+    coupon = db.session.get(Coupon, coupon_id)
+    if coupon is None:
+        abort(404)
     
+    form = CouponForm(obj=coupon)
     if form.validate_on_submit():
         existing = Coupon.query.filter_by(code=form.code.data.upper()).first()
         if existing and existing.id != coupon.id:
@@ -71,12 +69,15 @@ def coupon_edit(coupon_id):
     
     return render_template("admin/coupon_form.html", form=form, coupon=coupon, title="Editar Cupón")
 
-
 @admin_bp.route("/cupones/<int:coupon_id>/eliminar", methods=["POST"])
 @admin_required
 def coupon_delete(coupon_id):
     """Elimina un cupón."""
-    coupon = Coupon.query.get_or_404(coupon_id)
+    # ✅ CORREGIDO: Reemplazado Coupon.query.get_or_404 por db.session.get
+    coupon = db.session.get(Coupon, coupon_id)
+    if coupon is None:
+        abort(404)
+        
     db.session.delete(coupon)
     db.session.commit()
     flash(f"✅ Cupón '{coupon.code}' eliminado", "success")

@@ -1,7 +1,15 @@
 # app/services/loyalty_service.py
+"""
+Servicio de fidelización: otorga puntos por compras completadas.
+
+⚠️ El cálculo de descuentos por nivel vive en discount_calculator
+(única fuente de verdad). Este módulo solo otorga puntos.
+"""
 from decimal import Decimal
+
 from flask import flash
-from ..config.constants import POINTS_PER_DOLLAR, LOYALTY_LEVELS_WITH_DISCOUNT
+
+from ..config.constants import POINTS_PER_DOLLAR
 
 
 def calculate_points_from_order(order) -> int:
@@ -43,8 +51,3 @@ def award_points_for_order(order, user):
         flash(f"🎉 ¡Ganaste {points} puntos y subiste a {user.loyalty_level_display}!", "success")
     else:
         flash(f"⭐ Ganaste {points} puntos por tu compra", "info")
-
-
-def can_use_level_discount(user) -> bool:
-    """Verifica si el usuario puede usar el descuento por nivel."""
-    return user.loyalty_level in LOYALTY_LEVELS_WITH_DISCOUNT

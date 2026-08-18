@@ -18,11 +18,11 @@
                 <p class="text-4xl sm:text-5xl font-bold text-leather-900">{{ product.average_rating }}</p>
                 <div class="flex items-center gap-0.5 sm:gap-1 mt-1 sm:mt-2 justify-center">
                     {% for i in range(1, 6) %}
-                    {% if i <= product.average_rating %}
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                    {% else %}
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-                    {% endif %}
+                        {% if i <= product.average_rating %}
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                        {% else %}
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                        {% endif %}
                     {% endfor %}
                 </div>
                 <p class="text-xs sm:text-sm text-leather-700 mt-1">{{ product.review_count }} reseñas</p>
@@ -32,15 +32,15 @@
             <div class="flex-1 w-full space-y-1.5 sm:space-y-2">
                 {% set approved_reviews = product.reviews|selectattr('approved')|list %}
                 {% for stars in [5, 4, 3, 2, 1] %}
-                {% set count = approved_reviews|selectattr('rating', 'equalto', stars)|list|length %}
-                {% set percentage = (count / product.review_count * 100)|round if product.review_count > 0 else 0 %}
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <span class="text-xs sm:text-sm text-leather-700 w-10 sm:w-12 flex-shrink-0">{{ stars }} ⭐</span>
-                    <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div class="h-full bg-yellow-400" style="width: {{ percentage }}%"></div>
+                    {% set count = approved_reviews|selectattr('rating', 'equalto', stars)|list|length %}
+                    {% set percentage = (count / product.review_count * 100)|round if product.review_count > 0 else 0 %}
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <span class="text-xs sm:text-sm text-leather-700 w-10 sm:w-12 flex-shrink-0">{{ stars }} ⭐</span>
+                        <div class="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-yellow-400" style="width: {{ percentage }}%"></div>
+                        </div>
+                        <span class="text-xs sm:text-sm text-leather-700 w-6 sm:w-8 text-right flex-shrink-0">{{ count }}</span>
                     </div>
-                    <span class="text-xs sm:text-sm text-leather-700 w-6 sm:w-8 text-right flex-shrink-0">{{ count }}</span>
-                </div>
                 {% endfor %}
             </div>
         </div>
@@ -49,49 +49,52 @@
 
     <!-- Formulario para dejar reseña -->
     {% if current_user.is_authenticated %}
-    {% set has_purchased = current_user.has_purchased_product(product.id) %}
-    {% set has_reviewed = product.has_user_reviewed(current_user.id) %}
+        {% set has_purchased = current_user.has_purchased_product(product.id) %}
+        {% set has_reviewed = product.has_user_reviewed(current_user.id) %}
 
-    {% if has_purchased and not has_reviewed %}
-    <div class="bg-leather-50 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8">
-        <h3 class="font-semibold text-leather-900 mb-4">Deja tu reseña</h3>
-        <form method="POST" action="/tienda/producto/{{ product.slug }}/reseña" class="space-y-4">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <div>
-                <label class="block text-sm font-semibold text-leather-900 mb-2">Calificación</label>
-                <div class="flex items-center gap-1 sm:gap-2" x-data="{ rating: 0 }">
-                    {% for i in range(1, 6) %}
-                    <button type="button"
-                            @click="rating = {{ i }}"
-                            :class="rating >= {{ i }} ? 'text-yellow-400' : 'text-gray-300'"
-                            class="text-2xl sm:text-3xl hover:text-yellow-400 transition cursor-pointer">
-                        ★
-                    </button>
-                    {% endfor %}
-                    <input type="hidden" name="rating" x-model="rating" required>
+        {% if has_purchased and not has_reviewed %}
+        <div class="bg-leather-50 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8">
+            <h3 class="font-semibold text-leather-900 mb-4">Deja tu reseña</h3>
+            <form method="POST" action="/tienda/producto/{{ product.slug }}/reseña" class="space-y-4">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                <div>
+                    <label class="block text-sm font-semibold text-leather-900 mb-2">Calificación</label>
+                    <div class="flex items-center gap-1 sm:gap-2" x-data="{ rating: 0 }">
+                        {% for i in range(1, 6) %}
+                        <button type="button"
+                                @click="rating = {{ i }}"
+                                :class="rating >= {{ i }} ? 'text-yellow-400' : 'text-gray-300'"
+                                class="text-2xl sm:text-3xl hover:text-yellow-400 transition cursor-pointer">
+                            ★
+                        </button>
+                        {% endfor %}
+                        <input type="hidden" name="rating" x-model="rating" required>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">Tocá las estrellas para calificar</p>
                 </div>
-                <p class="text-xs text-gray-500 mt-2">Tocá las estrellas para calificar</p>
-            </div>
-            <div>
-                <label class="block text-sm font-semibold text-leather-900 mb-2">Comentario (opcional)</label>
-                <textarea name="comment" rows="3"
-                          class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600"
-                          placeholder="¿Qué te gustó del producto?"></textarea>
-            </div>
-            <button type="submit" class="bg-craft-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-craft-500 transition w-full sm:w-auto">
-                Publicar Reseña
-            </button>
-        </form>
-    </div>
-    {% elif has_reviewed %}
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-6 sm:mb-8">
-        <p class="text-xs sm:text-sm text-blue-800">✅ Ya dejaste una reseña para este producto</p>
-    </div>
-    {% elif not has_purchased %}
-    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 mb-6 sm:mb-8">
-        <p class="text-xs sm:text-sm text-yellow-800">⚠️ Solo puedes reseñar productos que hayas comprado</p>
-    </div>
-    {% endif %}
+
+                <div>
+                    <label class="block text-sm font-semibold text-leather-900 mb-2">Comentario (opcional)</label>
+                    <textarea name="comment" rows="3"
+                              class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-craft-600"
+                              placeholder="¿Qué te gustó del producto?"></textarea>
+                </div>
+
+                <button type="submit" class="bg-craft-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-craft-500 transition w-full sm:w-auto">
+                    Publicar Reseña
+                </button>
+            </form>
+        </div>
+        {% elif has_reviewed %}
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 mb-6 sm:mb-8">
+            <p class="text-xs sm:text-sm text-blue-800">✅ Ya dejaste una reseña para este producto</p>
+        </div>
+        {% elif not has_purchased %}
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 sm:p-4 mb-6 sm:mb-8">
+            <p class="text-xs sm:text-sm text-yellow-800">⚠️ Solo puedes reseñar productos que hayas comprado</p>
+        </div>
+        {% endif %}
     {% else %}
     <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 sm:p-4 mb-6 sm:mb-8">
         <p class="text-xs sm:text-sm text-gray-700">
@@ -117,31 +120,33 @@
                 </div>
                 <div class="flex items-center gap-0.5 sm:gap-1">
                     {% for i in range(1, 6) %}
-                    {% if i <= review.rating %}
-                    <svg class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
-                    {% else %}
-                    <svg class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
-                    {% endif %}
+                        {% if i <= review.rating %}
+                        <svg class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-yellow-400 fill-current" viewBox="0 0 20 20"><path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/></svg>
+                        {% else %}
+                        <svg class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>
+
             {% if review.comment %}
             <p class="text-sm sm:text-base text-leather-700 mb-2 sm:mb-3">{{ review.comment }}</p>
             {% endif %}
+
             {% if current_user.is_authenticated and (review.user_id == current_user.id or current_user.is_admin) %}
             <form method="POST" action="/tienda/reseñas/{{ review.id }}/eliminar"
-                  onsubmit="return confirm('¿Eliminar esta reseña?')" class="inline">
+                  data-confirm="¿Eliminar esta reseña?" class="inline">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                 <button type="submit" class="text-xs text-red-600 hover:underline">Eliminar</button>
             </form>
             {% endif %}
         </div>
         {% else %}
-        {% if product.review_count == 0 %}
-        <div class="text-center py-6 sm:py-8">
-            <p class="text-sm sm:text-base text-gray-500">Este producto aún no tiene reseñas. ¡Sé el primero en reseñarlo!</p>
-        </div>
-        {% endif %}
+            {% if product.review_count == 0 %}
+            <div class="text-center py-6 sm:py-8">
+                <p class="text-sm sm:text-base text-gray-500">Este producto aún no tiene reseñas. ¡Sé el primero en reseñarlo!</p>
+            </div>
+            {% endif %}
         {% endfor %}
     </div>
 </section>

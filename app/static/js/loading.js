@@ -36,9 +36,10 @@
     // ============================================
     // 2. Loading para clicks en enlaces normales
     // ============================================
-        document.addEventListener('click', function(e) {
+    document.addEventListener('click', function(e) {
         const link = e.target.closest('a[href]');
         if (!link) return;
+
         const href = link.getAttribute('href');
         if (!href ||
             href.startsWith('#') ||
@@ -52,12 +53,12 @@
             (href.startsWith('http') && !href.includes(window.location.hostname))) {
             return;
         }
-        
+
         // ✅ NO mostrar loader si es una descarga de archivo
         const downloadExtensions = ['.csv', '.pdf', '.xlsx', '.xls', '.zip', '.doc', '.docx'];
         const isDownload = downloadExtensions.some(ext => href.toLowerCase().includes(ext));
         if (isDownload) return;
-        
+
         showLoader('Cargando página...');
     });
 
@@ -66,9 +67,21 @@
     // ============================================
     document.addEventListener('submit', function(e) {
         const form = e.target;
+
+        // ✅ Submit cancelado (ej: confirmación rechazada) → no mostrar loader
+        if (e.defaultPrevented) return;
+
         if (form.hasAttribute('hx-post') || form.hasAttribute('hx-get')) return;
+
         form.classList.add('submitting');
         window._formSubmitting = true;
+
+        // ✅ Deshabilitar el botón que inició el submit (evita doble envío)
+        if (e.submitter) {
+            e.submitter.classList.add('loading');
+            e.submitter.disabled = true;
+        }
+
         showLoader('Procesando...');
     });
 

@@ -1,10 +1,11 @@
 # app/blueprints/shop/routes.py
-from flask import render_template, request, flash, redirect, url_for
+from flask import render_template, request, flash, redirect, url_for, abort
 from flask_login import login_required, current_user
 from sqlalchemy import or_, func
+
 from . import shop_bp
 from ...models import Product, Category, Review, Order, OrderItem
-from ...extensions import db, csrf
+from ...extensions import db
 from ...config.constants import REVIEWABLE_ORDER_STATUSES
 
 
@@ -192,16 +193,17 @@ def add_review(slug: str):
     db.session.add(review)
     db.session.commit()
 
-    flash(f"📝 ¡Gracias por tu reseña! Será publicada después de ser revisada.", "success")
+    flash("📝 ¡Gracias por tu reseña! Será publicada después de ser revisada.", "success")
     return redirect(url_for("shop.product_detail", slug=slug))
 
 
 @shop_bp.route("/reseñas/<int:review_id>/eliminar", methods=["POST"])
 @login_required
 def delete_review(review_id):
-    """Elimina una reseña (solo el dueño o admin)."""
-    review = Review.query.get_or_404(review_id)
-
+    review = db.session.get(Review, review_id)
+    if review is None:
+        abort(404)
+    
     # Validar permisos
     if review.user_id != current_user.id and not current_user.is_admin:
         flash("❌ No tienes permiso para eliminar esta reseña", "error")

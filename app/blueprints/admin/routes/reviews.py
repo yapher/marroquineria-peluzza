@@ -1,5 +1,5 @@
 """Rutas para moderación de reseñas."""
-from flask import render_template, request, flash, redirect, url_for, current_app
+from flask import render_template, request, flash, redirect, url_for, current_app, abort
 from .. import admin_bp
 from ....models import Review
 from ....extensions import db
@@ -31,8 +31,10 @@ def reviews():
 @admin_bp.route("/reseñas/<int:review_id>/aprobar", methods=["POST"])
 @admin_required
 def approve_review(review_id):
-    """Aprueba una reseña y notifica al usuario."""
-    review = Review.query.get_or_404(review_id)
+    review = db.session.get(Review, review_id)
+    if review is None:
+        abort(404)
+    
     review.approved = True
     db.session.commit()
     
@@ -48,8 +50,10 @@ def approve_review(review_id):
 @admin_bp.route("/reseñas/<int:review_id>/rechazar", methods=["POST"])
 @admin_required
 def reject_review(review_id):
-    """Rechaza y elimina una reseña."""
-    review = Review.query.get_or_404(review_id)
+    review = db.session.get(Review, review_id)
+    if review is None:
+        abort(404)
+    
     user_name = review.user.first_name
     product_name = review.product.name
     db.session.delete(review)

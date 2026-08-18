@@ -1,3 +1,10 @@
+# app/extensions.py
+"""
+Instancias de extensiones Flask (sin configuración).
+
+⚠️ La configuración de login_manager vive en create_app()
+para evitar valores duplicados en dos lugares.
+"""
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -11,6 +18,3 @@ login_manager = LoginManager()
 csrf = CSRFProtect()
 cache = Cache()
 mail = Mail()
-
-login_manager.login_view = "auth.login"
-login_manager.login_message_category = "warning"

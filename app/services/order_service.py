@@ -35,13 +35,13 @@ def confirm_order_payment(order, payment_data: dict) -> bool:
     # Puntos de fidelización
     if order.user_id:
         from .loyalty_service import award_points_for_order
-        user = User.query.get(order.user_id)
+        user = db.session.get(User, order.user_id)
         if user:
             award_points_for_order(order, user)
 
     # Reducir stock
     for item in order.items:
-        product = Product.query.get(item.product_id)
+        product = db.session.get(Product, item.product_id)
         if product:
             product.stock -= item.quantity
 

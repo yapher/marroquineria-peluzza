@@ -5,6 +5,7 @@ from sqlalchemy import String, Numeric, Integer, ForeignKey, DateTime, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..extensions import db
 from ..config.constants import ORDER_FLOW, get_order_status_meta
+from ..utils.time import utc_now
 
 
 class Order(db.Model):
@@ -50,8 +51,8 @@ class Order(db.Model):
     tracking_number: Mapped[str | None] = mapped_column(String(100))
 
     # Timestamps
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now, onupdate=utc_now)
 
     # Relaciones
     items: Mapped[list["OrderItem"]] = relationship(back_populates="order", cascade="all, delete-orphan")

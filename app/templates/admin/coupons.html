@@ -1,11 +1,11 @@
 {% extends "layouts/admin.html" %}
 {% block title %}Cupones | Panel Admin{% endblock %}
-
 {% block admin_content %}
 <!-- ✅ VOLVER AL PANEL -->
 <div class="mb-4">
     <a href="/admin" class="text-craft-600 hover:underline text-sm">← Volver al Panel</a>
 </div>
+
 <div class="flex items-center justify-between mb-8">
     <div>
         <h1 class="font-display text-4xl font-bold text-leather-900">Cupones de Descuento</h1>
@@ -38,16 +38,16 @@
                 <td class="py-4 px-4 text-sm">
                     {{ coupon.uses_count }}
                     {% if coupon.max_uses > 0 %}
-                    / {{ coupon.max_uses }}
+                        / {{ coupon.max_uses }}
                     {% else %}
-                    <span class="text-gray-400">(ilimitado)</span>
+                        <span class="text-gray-400">(ilimitado)</span>
                     {% endif %}
                 </td>
                 <td class="py-4 px-4 text-sm">
                     {% if coupon.valid_until %}
-                    {{ coupon.valid_until.strftime('%d/%m/%Y') }}
+                        {{ coupon.valid_until.strftime('%d/%m/%Y') }}
                     {% else %}
-                    <span class="text-gray-400">Sin límite</span>
+                        <span class="text-gray-400">Sin límite</span>
                     {% endif %}
                 </td>
                 <td class="py-4 px-4 text-sm">
@@ -59,7 +59,7 @@
                 </td>
                 <td class="py-4 px-4 text-right">
                     <a href="/admin/cupones/{{ coupon.id }}/editar" class="text-craft-600 hover:underline text-sm mr-3">Editar</a>
-                    <form method="POST" action="/admin/cupones/{{ coupon.id }}/eliminar" class="inline" onsubmit="return confirm('¿Eliminar este cupón?')">
+                    <form method="POST" action="/admin/cupones/{{ coupon.id }}/eliminar" class="inline" data-confirm="¿Eliminar este cupón?">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button type="submit" class="text-red-600 hover:underline text-sm">Eliminar</button>
                     </form>

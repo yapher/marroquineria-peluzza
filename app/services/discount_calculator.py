@@ -1,12 +1,14 @@
 # app/services/discount_calculator.py
 """
-Calculadora de descuentos centralizada.
-Separa la lógica de cupones y niveles de fidelización
+Calculadora de descuentos y costos de envío centralizada.
+
+Separa la lógica de cupones, niveles de fidelización y costo de envío
 para que pueda reutilizarse en checkout, resumen de carrito, etc.
 """
 from decimal import Decimal
+
 from ..models import Coupon
-from ..config.constants import LoyaltyLevel, LOYALTY_LEVELS
+from ..config.constants import DEFAULT_SHIPPING_COST, FREE_SHIPPING_THRESHOLD
 
 
 def calculate_coupon_discount(subtotal: Decimal, coupon_code: str | None) -> Decimal:
@@ -43,26 +45,40 @@ def calculate_level_discount(subtotal_after_coupon: Decimal, user) -> Decimal:
     return subtotal_after_coupon * Decimal(discount_percent) / Decimal("100")
 
 
+def calculate_shipping_cost(subtotal: Decimal) -> Decimal:
+    """
+    Calcula el costo de envío según el subtotal.
+
+    Regla de negocio: envío GRATIS cuando el subtotal alcanza o supera
+    FREE_SHIPPING_THRESHOLD ($100). En caso contrario se cobra el envío
+    estándar (DEFAULT_SHIPPING_COST).
+
+    ⚠️ Esta regla ya estaba prometida en la web (index y /envios) pero
+    el código no la aplicaba: siempre se cobraba el envío fijo.
+    """
+    if subtotal >= FREE_SHIPPING_THRESHOLD:
+        return Decimal("0")
+    return DEFAULT_SHIPPING_COST
+
+
 def calculate_all_discounts(
     subtotal: Decimal,
     coupon_code: str | None = None,
     user=None
 ) -> dict:
     """
-    Calcula todos los descuentos de una vez.
+    Calcula todos los descuentos y el envío de una vez.
     Devuelve un dict con:
-      - coupon_discount: Decimal
-      - level_discount: Decimal
-      - total_discount: Decimal
-      - shipping_cost: Decimal
-      - final_total: Decimal
+    - coupon_discount: Decimal
+    - level_discount: Decimal
+    - total_discount: Decimal
+    - shipping_cost: Decimal
+    - final_total: Decimal
     """
-    from ..config.constants import DEFAULT_SHIPPING_COST
-
     coupon_discount = calculate_coupon_discount(subtotal, coupon_code)
     base_for_level = subtotal - coupon_discount
     level_discount = calculate_level_discount(base_for_level, user)
-    shipping_cost = DEFAULT_SHIPPING_COST
+    shipping_cost = calculate_shipping_cost(subtotal)
 
     total_discount = coupon_discount + level_discount
     final_total = subtotal + shipping_cost - total_discount

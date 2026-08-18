@@ -6,8 +6,9 @@ y solo maneja la capa HTTP (request/response).
 
 ⚠️ Todas las rutas del carrito y checkout requieren login.
 """
-from flask import render_template, request, flash, redirect, url_for, session, current_app
+from flask import render_template, request, flash, redirect, url_for, session, current_app, abort
 from flask_login import current_user, login_required
+
 from . import checkout_bp
 from ...services.cart_service import Cart
 from ...services.checkout_service import validate_cart_stock, create_order, cleanup_failed_order
@@ -18,18 +19,12 @@ from ...services.email_service import send_admin_new_order_notification
 from ...models import Product, Order
 from ...forms.checkout_forms import CheckoutForm
 from ...extensions import db, csrf
-from ...config.constants import OrderStatus, DEFAULT_SHIPPING_COST
+from ...config.constants import OrderStatus
 
 
 # ============================================
 # CARRITO (requiere login)
 # ============================================
-
-@checkout_bp.route("/test")
-def test_route():
-    return "✅ ¡El blueprint de checkout está funcionando!"
-
-
 @checkout_bp.route("/carrito")
 @login_required
 def view_cart():
@@ -37,18 +32,14 @@ def view_cart():
     return render_template("checkout/cart.html", cart=cart)
 
 
-@checkout_bp.route("/carrito/count")
-@login_required
-def cart_count():
-    cart = Cart()
-    return render_template("partials/cart_count.html", count=cart.total_items)
-
-
 @csrf.exempt
 @checkout_bp.route("/agregar/<int:product_id>", methods=["POST"])
 @login_required
 def add_to_cart(product_id):
-    product = Product.query.get_or_404(product_id)
+    product = db.session.get(Product, product_id)
+    if product is None:
+        abort(404)
+    
     quantity = request.form.get("quantity", 1, type=int)
 
     cart = Cart()
@@ -67,8 +58,10 @@ def add_to_cart(product_id):
 def update_cart():
     product_id = request.form.get("product_id")
     quantity = request.form.get("quantity", type=int)
+
     cart = Cart()
     cart.update(product_id, quantity)
+
     return render_template("partials/cart_body.html", cart=Cart())
 
 
@@ -89,11 +82,11 @@ def remove_from_cart(product_id):
 # ============================================
 # CHECKOUT (requiere login)
 # ============================================
-
 @checkout_bp.route("/checkout")
 @login_required
 def checkout_page():
     cart = Cart()
+
     if cart.total_items == 0:
         flash("Tu carrito está vacío", "warning")
         return redirect(url_for("checkout.view_cart"))
@@ -121,7 +114,6 @@ def checkout_page():
 # ============================================
 # CUPONES (requiere login)
 # ============================================
-
 @checkout_bp.route("/aplicar-cupon", methods=["POST"])
 @login_required
 def apply_coupon():
@@ -149,12 +141,12 @@ def remove_coupon():
 # ============================================
 # PROCESAR PEDIDO → MERCADO PAGO (requiere login)
 # ============================================
-
 @checkout_bp.route("/checkout/procesar", methods=["POST"])
 @login_required
 def process_checkout():
     """Crea la orden y redirige al Checkout Pro de Mercado Pago."""
     cart = Cart()
+
     if cart.total_items == 0:
         flash("Tu carrito está vacío", "error")
         return redirect(url_for("checkout.view_cart"))
@@ -194,20 +186,21 @@ def process_checkout():
 
     session["pending_order_id"] = order.id
 
-    # ✅ El carrito NO se limpia acá: se limpia recién cuando se confirma el pago
+    # El carrito NO se limpia acá: se limpia recién cuando se confirma el pago
     return redirect(preference["init_point"])
 
 
 # ============================================
 # RETORNO DESDE MERCADO PAGO (sin login_required, MP redirige acá)
 # ============================================
-
 @checkout_bp.route("/pago/retorno/<int:order_id>")
 def payment_return(order_id):
-    """Mercado Pago redirige acá después de pagar."""
-    order = Order.query.get_or_404(order_id)
+    order = db.session.get(Order, order_id)
+    if order is None:
+        abort(404)
+    
     payment_id = request.args.get("payment_id") or request.args.get("collection_id")
-
+    # ... (resto del código igual)
     if not payment_id:
         return redirect(url_for("checkout.payment_failure", order_id=order.id))
 
@@ -233,7 +226,7 @@ def _confirm_order_payment(order, payment):
     if not was_confirmed:
         return
 
-    # ✅ Limpiar del carrito SOLO los productos comprados
+    # Limpiar del carrito SOLO los productos comprados
     cart = Cart()
     for item in order.items:
         cart.remove(item.product_id)
@@ -245,7 +238,6 @@ def _confirm_order_payment(order, payment):
 # ============================================
 # WEBHOOK DE MERCADO PAGO (server-to-server)
 # ============================================
-
 @csrf.exempt
 @checkout_bp.route("/webhook/mercadopago", methods=["POST"])
 def mercadopago_webhook():
@@ -254,8 +246,8 @@ def mercadopago_webhook():
     Siempre responde 200 rápido, incluso ante datos inválidos.
     """
     payment_id = None
-    payload = request.get_json(silent=True) or {}
 
+    payload = request.get_json(silent=True) or {}
     if payload.get("type") == "payment":
         payment_id = payload.get("data", {}).get("id")
 
@@ -279,7 +271,7 @@ def mercadopago_webhook():
         current_app.logger.warning(f"Webhook MP: pago {payment_id} sin external_reference")
         return "", 200
 
-    order = Order.query.get(order_id)
+    order = db.session.get(Order, order_id)
     if not order:
         current_app.logger.warning(f"Webhook MP: orden {order_id} no encontrada (pago {payment_id})")
         return "", 200
@@ -293,34 +285,41 @@ def mercadopago_webhook():
 # ============================================
 # PÁGINAS DE RESULTADO
 # ============================================
-
 @checkout_bp.route("/pago/exitoso/<int:order_id>")
 def payment_success(order_id):
-    order = Order.query.get_or_404(order_id)
+    order = db.session.get(Order, order_id)
+    if order is None:
+        abort(404)
+    
     if current_user.is_authenticated and order.user_id and order.user_id != current_user.id and not current_user.is_admin:
+        # ... (resto del código igual)
         flash("No tienes permiso para ver este pedido", "error")
         return redirect(url_for("main.index"))
+
     return render_template("checkout/payment_success.html", order=order)
 
 
 @checkout_bp.route("/pago/pendiente/<int:order_id>")
 def payment_pending(order_id):
-    order = Order.query.get_or_404(order_id)
+    order = db.session.get(Order, order_id)
+    if order is None:
+        abort(404)
     return render_template("checkout/payment_pending.html", order=order)
-
 
 @checkout_bp.route("/pago/fallido/<int:order_id>")
 def payment_failure(order_id):
-    order = Order.query.get_or_404(order_id)
+    order = db.session.get(Order, order_id)
+    if order is None:
+        abort(404)
     return render_template("checkout/payment_failure.html", order=order)
-
 
 @checkout_bp.route("/pago/reintentar/<int:order_id>", methods=["POST"])
 @login_required
 def retry_payment(order_id):
-    """Reintenta el pago de un pedido pendiente."""
-    order = Order.query.get_or_404(order_id)
-
+    order = db.session.get(Order, order_id)
+    if order is None:
+        abort(404)
+    
     if order.status != OrderStatus.PENDING_PAYMENT:
         flash("Este pedido ya fue procesado", "warning")
         return redirect(url_for("checkout.payment_success", order_id=order.id))
@@ -340,10 +339,10 @@ def payment_cancel():
     order_id = session.get("pending_order_id")
 
     if order_id:
-        order = Order.query.get(order_id)
+        order = db.session.get(Order, order_id)
         if order and order.status == OrderStatus.PENDING_PAYMENT:
             cleanup_failed_order(order)
+            session.pop("pending_order_id", None)
+            flash("Pedido cancelado. Tu carrito sigue intacto.", "info")
 
-    session.pop("pending_order_id", None)
-    flash("Pedido cancelado. Tu carrito sigue intacto.", "info")
     return redirect(url_for("checkout.view_cart"))

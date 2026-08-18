@@ -1,7 +1,9 @@
+# app/models/review.py
 from datetime import datetime
 from sqlalchemy import Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from ..extensions import db
+from ..utils.time import utc_now
 
 
 class Review(db.Model):
@@ -10,18 +12,18 @@ class Review(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     product_id: Mapped[int] = mapped_column(ForeignKey("products.id"), nullable=False)
-    
+
     # Calificación de 1 a 5 estrellas
     rating: Mapped[int] = mapped_column(Integer, nullable=False)
-    
+
     # Comentario (opcional)
     comment: Mapped[str | None] = mapped_column(Text)
-    
+
     # Estado de aprobación (moderación)
     approved: Mapped[bool] = mapped_column(default=True)
-    
+
     # Timestamp
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
     # Relaciones
     user: Mapped["User"] = relationship(back_populates="reviews")

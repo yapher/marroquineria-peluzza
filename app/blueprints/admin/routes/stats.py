@@ -1,20 +1,22 @@
 # app/blueprints/admin/routes/stats.py
 """Rutas de estadísticas y reportes."""
+from datetime import timedelta
+
 from flask import render_template
+from sqlalchemy import func, extract
+
 from .. import admin_bp
 from ....models import Order, OrderItem, Product, Category, User, Review
 from ....extensions import db
 from ....config.constants import COMPLETED_ORDER_STATUSES, OrderStatus, get_order_status_meta
+from ....utils.time import utc_now
 from . import admin_required
-from datetime import datetime, timedelta
-from sqlalchemy import func, extract
 
 
 @admin_bp.route("/estadisticas")
 @admin_required
 def stats():
     """Panel de estadísticas con gráficos."""
-
     # Pedidos completados
     completed_orders = Order.query.filter(
         Order.status.in_(COMPLETED_ORDER_STATUSES)
@@ -23,11 +25,12 @@ def stats():
     total_revenue = sum(float(order.total) for order in completed_orders)
     total_orders = len(completed_orders)
     avg_ticket = total_revenue / total_orders if total_orders > 0 else 0
+
     pending_orders = Order.query.filter(Order.status == OrderStatus.PENDING_PAYMENT).count()
     cancelled_orders = Order.query.filter(Order.status == OrderStatus.CANCELLED).count()
 
     # Ventas mensuales (últimos 6 meses)
-    six_months_ago = datetime.utcnow() - timedelta(days=180)
+    six_months_ago = utc_now() - timedelta(days=180)
     monthly_data = (
         db.session.query(
             extract('year', Order.created_at).label('year'),
@@ -48,7 +51,6 @@ def stats():
     monthly_revenue = []
     monthly_orders_count = []
     month_names = {1:'Ene',2:'Feb',3:'Mar',4:'Abr',5:'May',6:'Jun',7:'Jul',8:'Ago',9:'Sep',10:'Oct',11:'Nov',12:'Dic'}
-
     for row in monthly_data:
         months_labels.append(f"{month_names.get(int(row.month), 'Mes')} {int(row.year)}")
         monthly_revenue.append(float(row.total_sales or 0))
@@ -84,7 +86,6 @@ def stats():
         .order_by(func.sum(OrderItem.price * OrderItem.quantity).desc())
         .all()
     )
-
     category_labels = [row.category_name for row in revenue_by_category]
     category_revenue = [float(row.total_revenue or 0) for row in revenue_by_category]
 
