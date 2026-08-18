@@ -158,36 +158,33 @@ def product_edit(product_id):
 @admin_bp.route("/productos/<int:product_id>/eliminar", methods=["POST"])
 @admin_required
 def product_delete(product_id):
-    """Elimina un producto permanentemente de la base de datos y del storage."""
+    """Elimina un producto permanentemente (si no tiene ventas asociadas)."""
     from ....models import OrderItem
 
     product = db.session.get(Product, product_id)
     if product is None:
         abort(404)
 
-    # 🛡️ Seguridad: si el producto tiene ventas asociadas, NO se puede eliminar
-    # porque rompería la integridad de las órdenes históricas.
-    has_orders = OrderItem.query.filter_by(product_id=product.id).first() is not None
-    if has_orders:
+    # Si todavía tiene ventas, bloquear y explicar qué hacer
+    sales_count = OrderItem.query.filter_by(product_id=product.id).count()
+    if sales_count > 0:
         flash(
-            f"⚠️ No se puede eliminar '{product.name}' porque tiene ventas asociadas. "
-            f"Se ha desactivado en su lugar para preservar el historial.",
-            "warning"
+            f"⚠️ No se puede eliminar '{product.name}' porque tiene "
+            f"{sales_count} venta(s) asociada(s). "
+            f"Primero borrá los pedidos desde el panel de Pedidos "
+            f"(botón 'Borrar todos los pedidos').",
+            "error"
         )
-        product.active = False
-        product.featured = False
-        db.session.commit()
         return redirect(url_for("admin.products"))
 
-    # 🗑️ Eliminar imágenes del storage (Cloudinary o filesystem local)
+    # Borrar imágenes del storage (Cloudinary o local)
     if product.image_url:
         delete_image(product.image_url)
     for img in product.images:
         delete_image(img.url)
 
-    # 🗑️ Eliminar el producto de la base de datos
-    # Las imágenes (ProductImage), variantes y reseñas se borran en cascada
-    # gracias a cascade="all, delete-orphan" en el modelo Product.
+    # Borrar el producto (images, variants y reviews se borran en cascada
+    # gracias a cascade="all, delete-orphan" en el modelo)
     product_name = product.name
     db.session.delete(product)
     db.session.commit()

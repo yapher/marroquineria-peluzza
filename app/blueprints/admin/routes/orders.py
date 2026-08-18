@@ -3,7 +3,7 @@
 from flask import render_template, request, flash, redirect, url_for, Response, current_app, abort 
 
 from .. import admin_bp
-from ....models import Order, Product, User, Coupon
+from ....models import Order, OrderItem, Product, User, Coupon, LoyaltyTransaction
 from ....extensions import db
 from ....services.loyalty_service import award_points_for_order
 from ....services.email_service import send_order_status_update
@@ -38,6 +38,37 @@ def orders():
         stats=stats,
         current_status=status_filter or "all"
     )
+
+# ============================================
+# BORRAR TODOS LOS PEDIDOS (limpieza)
+# ============================================
+@admin_bp.route("/pedidos/borrar-todos", methods=["POST"])
+@admin_required
+def orders_delete_all():
+    """
+    Elimina TODOS los pedidos y sus dependencias para permitir
+    borrar los productos después.
+
+    Orden de borrado (respeta las Foreign Keys):
+      1. LoyaltyTransaction (order_id -> orders.id)
+      2. OrderItem         (order_id -> orders.id, product_id -> products.id)
+      3. Order
+    """
+    # 1. Transacciones de fidelización ligadas a pedidos
+    LoyaltyTransaction.query.filter(
+        LoyaltyTransaction.order_id.isnot(None)
+    ).delete(synchronize_session=False)
+
+    # 2. Items de pedido (son los que bloquean el borrado de productos)
+    OrderItem.query.delete(synchronize_session=False)
+
+    # 3. Pedidos
+    orders_count = Order.query.delete(synchronize_session=False)
+
+    db.session.commit()
+    flash(f"✅ Se eliminaron {orders_count} pedidos y sus items asociados", "success")
+    return redirect(url_for("admin.orders"))
+
 
 
 @admin_bp.route("/pedidos/<int:order_id>")
