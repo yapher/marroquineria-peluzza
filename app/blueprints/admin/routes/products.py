@@ -158,14 +158,41 @@ def product_edit(product_id):
 @admin_bp.route("/productos/<int:product_id>/eliminar", methods=["POST"])
 @admin_required
 def product_delete(product_id):
+    """Elimina un producto permanentemente de la base de datos y del storage."""
+    from ....models import OrderItem
+
     product = db.session.get(Product, product_id)
     if product is None:
         abort(404)
-    
-    product.active = False
-    product.featured = False
+
+    # 🛡️ Seguridad: si el producto tiene ventas asociadas, NO se puede eliminar
+    # porque rompería la integridad de las órdenes históricas.
+    has_orders = OrderItem.query.filter_by(product_id=product.id).first() is not None
+    if has_orders:
+        flash(
+            f"⚠️ No se puede eliminar '{product.name}' porque tiene ventas asociadas. "
+            f"Se ha desactivado en su lugar para preservar el historial.",
+            "warning"
+        )
+        product.active = False
+        product.featured = False
+        db.session.commit()
+        return redirect(url_for("admin.products"))
+
+    # 🗑️ Eliminar imágenes del storage (Cloudinary o filesystem local)
+    if product.image_url:
+        delete_image(product.image_url)
+    for img in product.images:
+        delete_image(img.url)
+
+    # 🗑️ Eliminar el producto de la base de datos
+    # Las imágenes (ProductImage), variantes y reseñas se borran en cascada
+    # gracias a cascade="all, delete-orphan" en el modelo Product.
+    product_name = product.name
+    db.session.delete(product)
     db.session.commit()
-    flash(f"✅ Producto '{product.name}' desactivado", "success")
+
+    flash(f"✅ Producto '{product_name}' eliminado permanentemente", "success")
     return redirect(url_for("admin.products"))
 
 
