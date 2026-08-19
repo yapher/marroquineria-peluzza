@@ -50,6 +50,9 @@ class Config:
     FACEBOOK_CLIENT_ID = os.getenv("FACEBOOK_CLIENT_ID")
     FACEBOOK_CLIENT_SECRET = os.getenv("FACEBOOK_CLIENT_SECRET")
 
+    # Dominio público (CRÍTICO para el redirect_uri de OAuth)
+    PUBLIC_URL = os.getenv("PUBLIC_URL", "http://localhost:5000")
+
 
 class DevelopmentConfig(Config):
     DEBUG = True

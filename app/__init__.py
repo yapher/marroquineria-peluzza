@@ -27,6 +27,9 @@ def create_app(config_name='development'):
     login_manager.login_message = 'Por favor, inicia sesión para acceder a esta página.'
     login_manager.login_message_category = 'info'
 
+    # ============================================
+    # ERROR HANDLERS (deben ir AQUÍ, dentro de create_app)
+    # ============================================
     @app.errorhandler(413)
     def request_entity_too_large(e):
         max_mb = app.config.get("MAX_CONTENT_LENGTH", 0) // (1024 * 1024)
@@ -36,10 +39,20 @@ def create_app(config_name='development'):
         )
         return redirect(request.referrer or url_for("admin.products"))
 
-    # Registrar providers OAuth (Google, Facebook...) si hay credenciales
+    @app.errorhandler(401)
+    def unauthorized(e):
+        flash('Debes iniciar sesión para acceder a esta página', 'warning')
+        return redirect(url_for('auth.login'))
+
+    # ============================================
+    # PROVEEDORES OAUTH (Google, Facebook...)
+    # ============================================
     from .services.auth.oauth_service import register_providers
     register_providers(app)
 
+    # ============================================
+    # BLUEPRINTS
+    # ============================================
     from .blueprints.main import main_bp
     from .blueprints.shop import shop_bp
     from .blueprints.auth import auth_bp
@@ -60,6 +73,9 @@ def create_app(config_name='development'):
     def load_user(user_id):
         return db.session.get(User, int(user_id))
 
+    # ============================================
+    # CONTEXT PROCESSOR (variables globales de templates)
+    # ============================================
     @app.context_processor
     def inject_globals():
         from .services.cart_service import Cart
@@ -68,9 +84,7 @@ def create_app(config_name='development'):
 
         cart = Cart()
 
-        # ✅ Categorías activas para el menú (mobile + desktop)
-        # Se cargan dinámicamente desde la BD: si creás una nueva
-        # categoría en el admin, aparece automáticamente en el menú.
+        # Categorías activas para el menú (mobile + desktop)
         try:
             nav_categories = Category.query.filter_by(active=True).order_by(Category.name).all()
         except Exception:
@@ -79,7 +93,6 @@ def create_app(config_name='development'):
         return {
             "cart_count": cart.total_items,
             "nav_categories": nav_categories,
-            # ✅ Providers OAuth habilitados (botones de login social)
             "social_providers": get_enabled_providers(),
         }
 
