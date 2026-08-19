@@ -50,8 +50,8 @@ class Config:
     FACEBOOK_CLIENT_ID = os.getenv("FACEBOOK_CLIENT_ID")
     FACEBOOK_CLIENT_SECRET = os.getenv("FACEBOOK_CLIENT_SECRET")
 
-    # Dominio público (CRÍTICO para el redirect_uri de OAuth)
-    PUBLIC_URL = os.getenv("PUBLIC_URL", "http://localhost:5000")
+    # Dominio público (CRÍTICO para que los callbacks funcionen en producción)
+    PUBLIC_URL = os.getenv("PUBLIC_URL", "https://marroquineria-peluzza.onrender.com")
 
 
 class DevelopmentConfig(Config):
