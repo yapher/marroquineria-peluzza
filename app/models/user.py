@@ -3,11 +3,9 @@ from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-
 from ..extensions import db
 from decimal import Decimal
 from sqlalchemy import String, Boolean, DateTime, Integer, Numeric
-
 from ..config.constants import (
     LOYALTY_LEVELS,
     LoyaltyLevel,
@@ -15,7 +13,6 @@ from ..config.constants import (
     get_next_loyalty_level,
 )
 from ..utils.time import utc_now
-
 
 class User(UserMixin, db.Model):
     __tablename__ = "users"
@@ -32,6 +29,9 @@ class User(UserMixin, db.Model):
     loyalty_points: Mapped[int] = mapped_column(Integer, default=0)
     loyalty_level: Mapped[str] = mapped_column(String(20), default=LoyaltyLevel.BRONZE)
     total_spent: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
+
+    # ✅ NUEVO: URL de la foto de perfil del proveedor OAuth
+    oauth_profile_pic: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # ==========================================
     # RELACIONES

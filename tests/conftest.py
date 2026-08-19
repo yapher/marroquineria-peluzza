@@ -46,6 +46,7 @@ def db(app):
         _db.session.rollback()
         _db.session.remove()
         _db.drop_all()
+        _db.engine.dispose()
 
 
 @pytest.fixture

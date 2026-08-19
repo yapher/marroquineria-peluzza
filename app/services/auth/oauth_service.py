@@ -125,6 +125,11 @@ def get_or_create_user(provider: str, profile: dict) -> User:
         provider=provider, provider_user_id=provider_user_id
     ).first()
     if social:
+        # Ya existe el vínculo: solo actualizamos el avatar por si cambió
+        avatar_url = _extract_avatar(provider, profile)
+        if avatar_url:
+            social.user.oauth_profile_pic = avatar_url
+            db.session.commit()
         return social.user
 
     user = None
@@ -140,6 +145,10 @@ def get_or_create_user(provider: str, profile: dict) -> User:
         user.set_password(secrets.token_urlsafe(24))
         db.session.add(user)
         db.session.flush()
+
+    avatar_url = _extract_avatar(provider, profile)
+    if avatar_url:
+        user.oauth_profile_pic = avatar_url
 
     db.session.add(SocialAccount(
         user_id=user.id,
@@ -169,3 +178,14 @@ def _extract_last_name(profile: dict) -> str:
     if profile.get("name") and " " in profile["name"]:
         return profile["name"].split(" ", 1)[1]
     return ""
+
+
+def _extract_avatar(provider: str, profile: dict) -> str | None:
+    """Extrae la URL de la foto de perfil según el formato de cada provider."""
+    if provider == "google":
+        return profile.get("picture")
+    if provider == "facebook":
+        pic = profile.get("picture")
+        if isinstance(pic, dict):
+            return pic.get("data", {}).get("url")
+    return None

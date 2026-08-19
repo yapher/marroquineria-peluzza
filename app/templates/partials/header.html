@@ -124,9 +124,16 @@
             {% if current_user.is_authenticated %}
             <div class="relative group hidden xl:block">
                 <button class="flex items-center gap-2 text-leather-700 hover:text-craft-600 transition py-2">
+                    {% if current_user.oauth_profile_pic %}
+                    <img src="{{ current_user.oauth_profile_pic }}"
+                         alt="{{ current_user.first_name }}"
+                         class="w-8 h-8 rounded-full object-cover border border-leather-200"
+                         referrerpolicy="no-referrer">
+                    {% else %}
                     <span class="w-8 h-8 bg-leather-100 rounded-full flex items-center justify-center text-sm font-bold text-leather-900 border border-leather-200">
                         {{ current_user.first_name[0] }}{{ current_user.last_name[0] }}
                     </span>
+                    {% endif %}
                     <span class="text-sm font-medium hidden lg:block">{{ current_user.first_name }}</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>

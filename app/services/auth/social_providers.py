@@ -23,7 +23,7 @@ SOCIAL_PROVIDERS = {
         "client_kwargs": {"scope": "email public_profile"},
         # Facebook requiere consultar su Graph API para obtener el perfil
         "profile_source": "api",
-        "profile_api_path": "me?fields=id,name,email,first_name,last_name",
+        "profile_api_path": "me?fields=id,name,email,first_name,last_name,picture.type(large)",
     },
 }
 
