@@ -6,6 +6,7 @@ from .coupon import Coupon
 from .wishlist import Wishlist
 from .review import Review
 from .loyalty_transaction import LoyaltyTransaction
+from .social_account import SocialAccount
 
 __all__ = [
     "User",
@@ -19,4 +20,5 @@ __all__ = [
     "Wishlist",
     "Review",
     "LoyaltyTransaction",
+    "SocialAccount",
 ]

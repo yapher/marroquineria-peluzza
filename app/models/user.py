@@ -3,9 +3,11 @@ from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+
 from ..extensions import db
 from decimal import Decimal
 from sqlalchemy import String, Boolean, DateTime, Integer, Numeric
+
 from ..config.constants import (
     LOYALTY_LEVELS,
     LoyaltyLevel,
@@ -52,10 +54,15 @@ class User(UserMixin, db.Model):
         order_by="desc(LoyaltyTransaction.created_at)"
     )
 
+    # ✅ Login social: cuentas OAuth vinculadas (Google, Facebook, ...)
+    social_accounts: Mapped[list["SocialAccount"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+
     # ==========================================
     # MÉTODOS Y PROPIEDADES
     # ==========================================
-
     @property
     def full_name(self) -> str:
         """Devuelve el nombre completo del usuario."""
@@ -94,9 +101,22 @@ class User(UserMixin, db.Model):
         return purchased is not None
 
     # ==========================================
+    # LOGIN SOCIAL
+    # ==========================================
+    def get_social_account(self, provider: str):
+        """Devuelve la cuenta social del provider indicado (o None)."""
+        from .social_account import SocialAccount
+        return SocialAccount.query.filter_by(
+            user_id=self.id, provider=provider
+        ).first()
+
+    def has_social_account(self, provider: str) -> bool:
+        """Verifica si el usuario está vinculado a ese provider."""
+        return self.get_social_account(provider) is not None
+
+    # ==========================================
     # SISTEMA DE FIDELIZACIÓN
     # ==========================================
-
     @property
     def loyalty_level_display(self) -> str:
         """Nombre del nivel en español."""
@@ -126,10 +146,12 @@ class User(UserMixin, db.Model):
         next_level = self.next_level
         if next_level["points"] is None:
             return 100.0
+
         current_threshold = LOYALTY_LEVELS.get(self.loyalty_level, {}).get("threshold", 0)
         range_size = next_level["points"] - current_threshold
         if range_size == 0:
             return 100.0
+
         progress = ((self.loyalty_points - current_threshold) / range_size) * 100
         return min(100.0, max(0.0, progress))
 

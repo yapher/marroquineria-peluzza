@@ -1,7 +1,7 @@
 # app/__init__.py
 """Factory principal de la aplicación Flask."""
 from flask import Flask, flash, redirect, request, url_for
-from .extensions import db, migrate, login_manager, csrf, mail, cache
+from .extensions import db, migrate, login_manager, csrf, mail, cache, oauth
 
 
 def create_app(config_name='development'):
@@ -20,6 +20,7 @@ def create_app(config_name='development'):
     csrf.init_app(app)
     mail.init_app(app)
     cache.init_app(app)
+    oauth.init_app(app)
 
     # Configuración de login (único lugar, no duplicar en extensions.py)
     login_manager.login_view = 'auth.login'
@@ -34,6 +35,10 @@ def create_app(config_name='development'):
             "error",
         )
         return redirect(request.referrer or url_for("admin.products"))
+
+    # Registrar providers OAuth (Google, Facebook...) si hay credenciales
+    from .services.auth.oauth_service import register_providers
+    register_providers(app)
 
     from .blueprints.main import main_bp
     from .blueprints.shop import shop_bp
@@ -59,6 +64,7 @@ def create_app(config_name='development'):
     def inject_globals():
         from .services.cart_service import Cart
         from .models import Category
+        from .services.auth.oauth_service import get_enabled_providers
 
         cart = Cart()
 
@@ -73,6 +79,8 @@ def create_app(config_name='development'):
         return {
             "cart_count": cart.total_items,
             "nav_categories": nav_categories,
+            # ✅ Providers OAuth habilitados (botones de login social)
+            "social_providers": get_enabled_providers(),
         }
 
     from .cli import seed_command, create_admin_command

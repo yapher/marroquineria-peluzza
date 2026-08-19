@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Crear Cuenta | Marroquinería Artesanal{% endblock %}
+
 {% block content %}
 <div class="min-h-screen flex">
     {# Panel de marca (solo desktop) #}
@@ -8,10 +9,12 @@
             <div class="absolute -top-20 -left-20 w-96 h-96 bg-craft-600/20 rounded-full blur-3xl"></div>
             <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-craft-500/10 rounded-full blur-3xl"></div>
         </div>
+
         <a href="/" class="relative flex items-center gap-3">
             <span class="text-3xl">👜</span>
             <span class="font-display text-2xl font-bold text-white">Marroquinería</span>
         </a>
+
         <div class="relative">
             <h2 class="font-display text-4xl font-bold text-white leading-tight mb-4">
                 Unite a nuestra
@@ -21,6 +24,7 @@
                 Creá tu cuenta y empezá a acumular puntos con cada compra, accedé a descuentos exclusivos y seguí tus pedidos.
             </p>
         </div>
+
         {# Beneficios #}
         <div class="relative space-y-3">
             <div class="flex items-center gap-3">
@@ -65,14 +69,14 @@
                         <label class="block text-sm font-semibold text-leather-900 mb-2">Nombre</label>
                         {{ form.first_name(class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-craft-600 focus:border-craft-600 focus:outline-none transition", placeholder="Juan") }}
                         {% for error in form.first_name.errors %}
-                        <p class="text-red-500 text-xs mt-1.5">{{ error }}</p>
+                            <p class="text-red-500 text-xs mt-1.5">{{ error }}</p>
                         {% endfor %}
                     </div>
                     <div>
                         <label class="block text-sm font-semibold text-leather-900 mb-2">Apellido</label>
                         {{ form.last_name(class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-craft-600 focus:border-craft-600 focus:outline-none transition", placeholder="Pérez") }}
                         {% for error in form.last_name.errors %}
-                        <p class="text-red-500 text-xs mt-1.5">{{ error }}</p>
+                            <p class="text-red-500 text-xs mt-1.5">{{ error }}</p>
                         {% endfor %}
                     </div>
                 </div>
@@ -81,7 +85,7 @@
                     <label class="block text-sm font-semibold text-leather-900 mb-2">Email</label>
                     {{ form.email(class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-craft-600 focus:border-craft-600 focus:outline-none transition", placeholder="tu@email.com") }}
                     {% for error in form.email.errors %}
-                    <p class="text-red-500 text-xs mt-1.5">{{ error }}</p>
+                        <p class="text-red-500 text-xs mt-1.5">{{ error }}</p>
                     {% endfor %}
                 </div>
 
@@ -91,7 +95,7 @@
                         {{ form.password(class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-craft-600 focus:border-craft-600 focus:outline-none transition", placeholder="Mínimo 8 caracteres", **{"data-password-toggle": ""}) }}
                     </div>
                     {% for error in form.password.errors %}
-                    <p class="text-red-500 text-xs mt-1.5">{{ error }}</p>
+                        <p class="text-red-500 text-xs mt-1.5">{{ error }}</p>
                     {% endfor %}
                 </div>
 
@@ -101,12 +105,15 @@
                         {{ form.password2(class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-craft-600 focus:border-craft-600 focus:outline-none transition", placeholder="Repetí tu contraseña", **{"data-password-toggle": ""}) }}
                     </div>
                     {% for error in form.password2.errors %}
-                    <p class="text-red-500 text-xs mt-1.5">{{ error }}</p>
+                        <p class="text-red-500 text-xs mt-1.5">{{ error }}</p>
                     {% endfor %}
                 </div>
 
                 {{ form.submit(class="w-full bg-craft-600 text-white font-semibold py-3.5 rounded-xl hover:bg-craft-500 transition shadow-lg shadow-craft-600/20 cursor-pointer") }}
             </form>
+
+            {# ✅ BOTONES DE REGISTRO SOCIAL (solo si hay providers configurados) #}
+            {% include "auth/partials/social_buttons.html" %}
 
             <div class="text-center bg-leather-50 rounded-xl p-4 mt-6">
                 <p class="text-sm text-leather-700">

@@ -9,6 +9,9 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     CACHE_TYPE = "SimpleCache"
 
+    # URL pública del sitio (links de email, webhook MP y callback OAuth)
+    PUBLIC_URL = os.getenv("PUBLIC_URL", "http://localhost:5000")
+
     # Subida de imágenes
     UPLOAD_FOLDER = str(BASE_DIR / "app" / "static" / "img" / "products")
     MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB total
@@ -40,6 +43,12 @@ class Config:
     CLOUDINARY_CLOUD_NAME = os.getenv("CLOUDINARY_CLOUD_NAME")
     CLOUDINARY_API_KEY = os.getenv("CLOUDINARY_API_KEY")
     CLOUDINARY_API_SECRET = os.getenv("CLOUDINARY_API_SECRET")
+
+    # Login social (OAuth)
+    GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
+    GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
+    FACEBOOK_CLIENT_ID = os.getenv("FACEBOOK_CLIENT_ID")
+    FACEBOOK_CLIENT_SECRET = os.getenv("FACEBOOK_CLIENT_SECRET")
 
 
 class DevelopmentConfig(Config):

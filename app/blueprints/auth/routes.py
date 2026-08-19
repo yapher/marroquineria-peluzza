@@ -1,10 +1,17 @@
-from flask import render_template, redirect, url_for, flash, request
+from flask import render_template, redirect, url_for, flash, request, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from urllib.parse import urlparse
+
 from . import auth_bp
 from ...forms.auth_forms import LoginForm, RegisterForm
 from ...models import User
 from ...extensions import db
+from ...services.auth.oauth_service import (
+    is_known_provider,
+    is_provider_enabled,
+    start_oauth_flow,
+    complete_oauth_flow,
+)
 
 
 def _is_safe_url(target):
@@ -30,8 +37,8 @@ def login():
             next_page = request.args.get("next")
             if not _is_safe_url(next_page):
                 next_page = None
-            return redirect(next_page or url_for("main.index"))
 
+            return redirect(next_page or url_for("main.index"))
         flash("Email o contraseña incorrectos", "error")
 
     return render_template("auth/login.html", form=form)
@@ -68,4 +75,34 @@ def register():
 def logout():
     logout_user()
     flash("Sesión cerrada", "info")
+    return redirect(url_for("main.index"))
+
+
+# ============================================
+# LOGIN SOCIAL (OAuth)
+# ============================================
+@auth_bp.route("/login/<provider>")
+def social_login(provider):
+    """Paso 1: redirige al usuario al provider OAuth (Google, Facebook...)."""
+    if not is_known_provider(provider):
+        abort(404)
+    if not is_provider_enabled(provider):
+        flash("El inicio de sesión con ese proveedor no está disponible.", "warning")
+        return redirect(url_for("auth.login"))
+    return start_oauth_flow(provider)
+
+
+@auth_bp.route("/callback/<provider>")
+def social_callback(provider):
+    """Paso 2: el provider devuelve al usuario acá tras autorizar."""
+    if not is_known_provider(provider):
+        abort(404)
+
+    user, error = complete_oauth_flow(provider)
+    if error:
+        flash(error, "error")
+        return redirect(url_for("auth.login"))
+
+    login_user(user)
+    flash(f"¡Bienvenido/a, {user.first_name}!", "success")
     return redirect(url_for("main.index"))
