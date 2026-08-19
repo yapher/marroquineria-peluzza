@@ -43,6 +43,17 @@ services:
         sync: false
       - key: FACEBOOK_CLIENT_SECRET
         sync: false
+        # ... variables existentes ...
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: FACEBOOK_OAUTH_CLIENT_ID
+        sync: false
+      - key: FACEBOOK_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: OAUTHLIB_INSECURE_TRANSPORT
+        value: "0"
 
 databases:
   - name: marroquineria-db
