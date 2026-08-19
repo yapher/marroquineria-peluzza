@@ -45,6 +45,7 @@ def get_enabled_providers() -> list[dict]:
 def register_providers(app) -> None:
     for key, spec in SOCIAL_PROVIDERS.items():
         if not is_configured(key, app.config):
+            app.logger.warning(f"⚠️ Provider OAuth NO registrado (faltan credenciales): {key}")
             continue
         registration = {
             "client_id": app.config[f"{key.upper()}_CLIENT_ID"],
@@ -71,6 +72,7 @@ def get_redirect_uri(provider: str) -> str:
 def start_oauth_flow(provider: str):
     client = oauth.create_client(provider)
     if client is None:
+        current_app.logger.error(f"❌ oauth.create_client('{provider}') devolvió None. Provider no registrado.")
         return None
     return client.authorize_redirect(get_redirect_uri(provider))
 
@@ -91,6 +93,7 @@ def extract_profile(provider: str, token: dict) -> dict | None:
 def complete_oauth_flow(provider: str) -> tuple:
     client = oauth.create_client(provider)
     if client is None:
+        current_app.logger.error(f"❌ oauth.create_client('{provider}') devolvió None en callback.")
         return None, "Proveedor no disponible."
     try:
         token = client.authorize_access_token()
@@ -100,9 +103,7 @@ def complete_oauth_flow(provider: str) -> tuple:
         user = get_or_create_user(provider, profile)
         return user, None
     except OAuthError as e:
-        current_app.logger.error(
-            f"❌ OAuthError ({provider}): {e.error} - {e.description}"
-        )
+        current_app.logger.error(f"❌ OAuthError ({provider}): {e.error} - {e.description}")
         if current_app.debug:
             return None, f"OAuthError: {e.error} - {e.description}"
         return None, "No se pudo completar el inicio de sesión. Intentá de nuevo."

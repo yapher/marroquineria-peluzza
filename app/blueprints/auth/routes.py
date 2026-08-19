@@ -15,7 +15,6 @@ from ...services.auth.oauth_service import (
 
 
 def _is_safe_url(target):
-    """✅ Evita open redirect: solo permite URLs internas."""
     if not target:
         return False
     parsed = urlparse(target)
@@ -33,11 +32,9 @@ def login():
         if user and user.check_password(form.password.data):
             login_user(user, remember=form.remember_me.data)
             flash(f"¡Bienvenido/a, {user.first_name}!", "success")
-
             next_page = request.args.get("next")
             if not _is_safe_url(next_page):
                 next_page = None
-
             return redirect(next_page or url_for("main.index"))
         flash("Email o contraseña incorrectos", "error")
 
@@ -83,26 +80,26 @@ def logout():
 # ============================================
 @auth_bp.route("/login/<provider>")
 def social_login(provider):
-    """Paso 1: redirige al usuario al provider OAuth (Google, Facebook...)."""
     if not is_known_provider(provider):
         abort(404)
     if not is_provider_enabled(provider):
         flash("El inicio de sesión con ese proveedor no está disponible.", "warning")
         return redirect(url_for("auth.login"))
-    return start_oauth_flow(provider)
+    result = start_oauth_flow(provider)
+    if result is None:
+        flash("Error al iniciar el flujo de autenticación. Verificá la configuración.", "error")
+        return redirect(url_for("auth.login"))
+    return result
 
 
 @auth_bp.route("/callback/<provider>")
 def social_callback(provider):
-    """Paso 2: el provider devuelve al usuario acá tras autorizar."""
     if not is_known_provider(provider):
         abort(404)
-
     user, error = complete_oauth_flow(provider)
     if error:
         flash(error, "error")
         return redirect(url_for("auth.login"))
-
     login_user(user)
     flash(f"¡Bienvenido/a, {user.first_name}!", "success")
     return redirect(url_for("main.index"))

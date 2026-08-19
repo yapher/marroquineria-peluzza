@@ -16,7 +16,6 @@ services:
         fromDatabase:
           name: marroquineria-db
           property: connectionString
-      # URL pública (callback OAuth + webhook MP + emails)
       - key: PUBLIC_URL
         value: https://marroquineria-peluzza.onrender.com
       - key: MAIL_SERVER
@@ -31,7 +30,6 @@ services:
         sync: false
       - key: MAIL_DEFAULT_SENDER
         sync: false
-      # Mercado Pago
       - key: MP_ACCESS_TOKEN
         sync: false
       # Login social (OAuth)
@@ -43,17 +41,6 @@ services:
         sync: false
       - key: FACEBOOK_CLIENT_SECRET
         sync: false
-        # ... variables existentes ...
-      - key: GOOGLE_OAUTH_CLIENT_ID
-        sync: false
-      - key: GOOGLE_OAUTH_CLIENT_SECRET
-        sync: false
-      - key: FACEBOOK_OAUTH_CLIENT_ID
-        sync: false
-      - key: FACEBOOK_OAUTH_CLIENT_SECRET
-        sync: false
-      - key: OAUTHLIB_INSECURE_TRANSPORT
-        value: "0"
 
 databases:
   - name: marroquineria-db
