@@ -1,7 +1,6 @@
 # app/__init__.py
 """Factory principal de la aplicación Flask."""
 from flask import Flask, flash, redirect, request, url_for
-
 from .extensions import db, migrate, login_manager, csrf, mail, cache
 
 
@@ -59,8 +58,22 @@ def create_app(config_name='development'):
     @app.context_processor
     def inject_globals():
         from .services.cart_service import Cart
+        from .models import Category
+
         cart = Cart()
-        return {"cart_count": cart.total_items}
+
+        # ✅ Categorías activas para el menú (mobile + desktop)
+        # Se cargan dinámicamente desde la BD: si creás una nueva
+        # categoría en el admin, aparece automáticamente en el menú.
+        try:
+            nav_categories = Category.query.filter_by(active=True).order_by(Category.name).all()
+        except Exception:
+            nav_categories = []
+
+        return {
+            "cart_count": cart.total_items,
+            "nav_categories": nav_categories,
+        }
 
     from .cli import seed_command, create_admin_command
     app.cli.add_command(seed_command)

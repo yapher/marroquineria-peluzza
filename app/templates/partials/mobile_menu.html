@@ -1,7 +1,8 @@
 {# ============================================
 MENÚ MÓVIL (Slide-in desde la derecha)
 Requiere que el body tenga: x-data="{ mobileMenuOpen: false }"
-Escucha el evento 'mobile-menu:close' despachado por mobile-menu.js
+Las categorías se cargan dinámicamente desde la BD
+vía el context processor (nav_categories).
 ============================================ #}
 <div x-show="mobileMenuOpen"
      x-cloak
@@ -69,49 +70,73 @@ Escucha el evento 'mobile-menu:close' despachado por mobile-menu.js
             </div>
 
             <!-- Navegación Tienda -->
-            <div x-data="{ tiendaOpen: true }">
+            {# ✅ FIX: tiendaOpen: false → el submenú de categorías
+               arranca CONTRAÍDO. Solo se abre al tocarlo. #}
+            <div x-data="{ tiendaOpen: false }">
                 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 px-2">Tienda</h3>
                 <nav class="space-y-1">
-                    <a href="/tienda"
+                    <a href="/tienda" @click="mobileMenuOpen = false"
                        class="mobile-menu-item flex items-center gap-3 px-4 py-3 text-base font-medium text-leather-900 hover:text-craft-600">
                         <span class="text-lg">🛍️</span>
                         <span>Todos los productos</span>
                     </a>
 
+                    {# Botón toggle de categorías #}
                     <button @click="tiendaOpen = !tiendaOpen"
                             class="mobile-menu-item w-full flex items-center justify-between px-4 py-3 text-base font-medium text-leather-900 hover:text-craft-600">
                         <span class="flex items-center gap-3">
                             <span class="text-lg">📂</span>
                             <span>Categorías</span>
+                            {# Badge con cantidad de categorías #}
+                            {% if nav_categories %}
+                            <span class="bg-craft-600/10 text-craft-600 text-xs font-bold px-2 py-0.5 rounded-full">
+                                {{ nav_categories|length }}
+                            </span>
+                            {% endif %}
                         </span>
                         <svg class="w-4 h-4 transition-transform duration-300" :class="{ 'rotate-180': tiendaOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
                     </button>
 
+                    {# ✅ FIX: Categorías dinámicas desde la BD.
+                       Si creás una categoría nueva en el admin,
+                       aparece acá automáticamente. #}
                     <div x-show="tiendaOpen"
+                         x-collapse
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 -translate-y-2"
                          x-transition:enter-end="opacity-100 translate-y-0"
                          x-transition:leave="transition ease-in duration-150"
                          x-transition:leave-start="opacity-100 translate-y-0"
                          x-transition:leave-end="opacity-0 -translate-y-2"
-                         class="ml-8 space-y-1">
-                        <a href="/tienda?categoria=billeteras"
+                         class="ml-4 space-y-1">
+                        {% for cat in nav_categories %}
+                        <a href="/tienda?categoria={{ cat.slug }}" @click="mobileMenuOpen = false"
                            class="mobile-menu-item flex items-center gap-3 px-4 py-2.5 text-sm text-leather-700 hover:text-craft-600">
+                            {# Icono por slug conocido, fallback genérico #}
+                            {% if cat.slug == 'billeteras' %}
                             <span>👛</span>
-                            <span>Billeteras</span>
-                        </a>
-                        <a href="/tienda?categoria=bolsos"
-                           class="mobile-menu-item flex items-center gap-3 px-4 py-2.5 text-sm text-leather-700 hover:text-craft-600">
+                            {% elif cat.slug == 'bolsos' %}
                             <span>👜</span>
-                            <span>Bolsos</span>
-                        </a>
-                        <a href="/tienda?categoria=cinturones"
-                           class="mobile-menu-item flex items-center gap-3 px-4 py-2.5 text-sm text-leather-700 hover:text-craft-600">
+                            {% elif cat.slug == 'cinturones' %}
                             <span>🎗️</span>
-                            <span>Cinturones</span>
+                            {% elif cat.slug == 'carteras' %}
+                            <span>👝</span>
+                            {% elif cat.slug == 'mochilas' %}
+                            <span>🎒</span>
+                            {% elif cat.slug == 'accesorios' %}
+                            <span>🧳</span>
+                            {% else %}
+                            <span>🏷️</span>
+                            {% endif %}
+                            <span>{{ cat.name }}</span>
+                            {# Contador de productos activos por categoría #}
+                            <span class="ml-auto text-xs text-gray-400">
+                                {{ cat.products|selectattr('active')|list|length }}
+                            </span>
                         </a>
+                        {% endfor %}
                     </div>
                 </nav>
             </div>
@@ -121,23 +146,23 @@ Escucha el evento 'mobile-menu:close' despachado por mobile-menu.js
             <div>
                 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 px-2">Mi Cuenta</h3>
                 <nav class="space-y-1">
-                    <a href="/cuenta"
+                    <a href="/cuenta" @click="mobileMenuOpen = false"
                        class="mobile-menu-item block px-4 py-3 text-base font-medium text-leather-900 hover:text-craft-600">Perfil</a>
-                    <a href="/cuenta/pedidos"
+                    <a href="/cuenta/pedidos" @click="mobileMenuOpen = false"
                        class="mobile-menu-item block px-4 py-3 text-base font-medium text-leather-900 hover:text-craft-600">Mis Pedidos</a>
-                    <a href="/cuenta/favoritos"
+                    <a href="/cuenta/favoritos" @click="mobileMenuOpen = false"
                        class="mobile-menu-item block px-4 py-3 text-base font-medium text-leather-900 hover:text-craft-600">❤️ Favoritos</a>
-                    <a href="/cuenta/fidelizacion"
+                    <a href="/cuenta/fidelizacion" @click="mobileMenuOpen = false"
                        class="mobile-menu-item block px-4 py-3 text-base font-medium text-leather-900 hover:text-craft-600">🎁 Mis Puntos ({{ current_user.loyalty_points }})</a>
 
                     {% if current_user.is_admin %}
                     <hr class="my-2 border-gray-200 mx-4">
-                    <a href="/admin"
+                    <a href="/admin" @click="mobileMenuOpen = false"
                        class="mobile-menu-item block px-4 py-3 text-base font-medium text-craft-600 hover:text-craft-500">⚙️ Panel Admin</a>
                     {% endif %}
 
                     <hr class="my-2 border-gray-200 mx-4">
-                    <a href="/auth/logout"
+                    <a href="/auth/logout" @click="mobileMenuOpen = false"
                        class="mobile-menu-item block px-4 py-3 text-base font-medium text-red-600 hover:text-red-500">Cerrar Sesión</a>
                 </nav>
             </div>
@@ -146,9 +171,9 @@ Escucha el evento 'mobile-menu:close' despachado por mobile-menu.js
             <div>
                 <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 px-2">Acceso</h3>
                 <div class="space-y-2">
-                    <a href="/auth/login"
+                    <a href="/auth/login" @click="mobileMenuOpen = false"
                        class="mobile-menu-item block w-full px-4 py-3 text-center text-base font-medium text-leather-900 border-2 border-leather-900 rounded-xl hover:bg-leather-900 hover:text-white transition">Iniciar Sesión</a>
-                    <a href="/auth/registro"
+                    <a href="/auth/registro" @click="mobileMenuOpen = false"
                        class="mobile-menu-item block w-full px-4 py-3 text-center text-base font-medium text-white bg-craft-600 rounded-xl hover:bg-craft-500 transition">Registrarse</a>
                 </div>
             </div>
@@ -157,9 +182,9 @@ Escucha el evento 'mobile-menu:close' despachado por mobile-menu.js
             <!-- Footer del menú móvil -->
             <div class="pt-6 border-t border-gray-200">
                 <nav class="space-y-2 text-sm">
-                    <a href="/nosotros" class="mobile-menu-item block px-4 py-2 text-leather-700 hover:text-craft-600">Nosotros</a>
-                    <a href="/envios" class="mobile-menu-item block px-4 py-2 text-leather-700 hover:text-craft-600">Envíos y Devoluciones</a>
-                    <a href="/contacto" class="mobile-menu-item block px-4 py-2 text-leather-700 hover:text-craft-600">Contacto</a>
+                    <a href="/nosotros" @click="mobileMenuOpen = false" class="mobile-menu-item block px-4 py-2 text-leather-700 hover:text-craft-600">Nosotros</a>
+                    <a href="/envios" @click="mobileMenuOpen = false" class="mobile-menu-item block px-4 py-2 text-leather-700 hover:text-craft-600">Envíos y Devoluciones</a>
+                    <a href="/contacto" @click="mobileMenuOpen = false" class="mobile-menu-item block px-4 py-2 text-leather-700 hover:text-craft-600">Contacto</a>
                 </nav>
             </div>
         </div>
