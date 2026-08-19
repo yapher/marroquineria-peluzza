@@ -2,10 +2,15 @@
 """Factory principal de la aplicación Flask."""
 from flask import Flask, flash, redirect, request, url_for
 from .extensions import db, migrate, login_manager, csrf, mail, cache, oauth
-
+from werkzeug.middleware.proxy_fix import ProxyFix # <-- AGREGAR ESTO
 
 def create_app(config_name='development'):
     app = Flask(__name__)
+
+     # ✅ AGREGAR ESTO PARA QUE FLASK SEPA QUE ESTÁ DETRÁS DE HTTPS
+    app.wsgi_app = ProxyFix(
+        app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1
+    )
 
     if config_name == 'production':
         app.config.from_object('config.ProductionConfig')
