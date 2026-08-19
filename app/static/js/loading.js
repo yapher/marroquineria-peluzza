@@ -109,11 +109,40 @@
     });
 
     // ============================================
-    // 5. Loading al cargar la página
+    // 5. ✅ FIX: Ocultar loader al cargar la página
     // ============================================
-    window.addEventListener('load', function() {
+    // Se usa una función centralizada que se registra en TODOS los
+    // eventos que indican que la página está lista:
+    //   - 'load'       → carga normal (primera vez)
+    //   - 'pageshow'   → restauración desde bfcache (botón "atrás" móvil)
+    //   - 'visibilitychange' → al volver a la pestaña visible
+    //
+    // El botón "atrás" en móvil restaura la página desde el bfcache
+    // disparando 'pageshow' con event.persisted=true, pero NO 'load'.
+    // Por eso el loader anterior quedaba visible para siempre.
+    // ============================================
+
+    function onPageReady() {
         hideLoader();
         window._formSubmitting = false;
+    }
+
+    // Carga normal (primera vez)
+    window.addEventListener('load', onPageReady);
+
+    // ✅ Restauración desde bfcache (botón atrás/adelante del navegador)
+    window.addEventListener('pageshow', function(event) {
+        // event.persisted=true significa que viene del bfcache
+        // (el usuario presionó "atrás" o "adelante")
+        onPageReady();
+    });
+
+    // ✅ Seguridad extra: si la pestaña vuelve a ser visible,
+    // ocultar cualquier loader que haya quedado huérfano
+    document.addEventListener('visibilitychange', function() {
+        if (document.visibilityState === 'visible') {
+            onPageReady();
+        }
     });
 
     // ============================================
@@ -121,4 +150,5 @@
     // ============================================
     window.showGlobalLoader = showLoader;
     window.hideGlobalLoader = hideLoader;
+
 })();

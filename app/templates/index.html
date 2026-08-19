@@ -1,12 +1,10 @@
 {% extends "base.html" %}
 {% block title %}Inicio | Marroquinería Artesanal{% endblock %}
-
 {% block content %}
 <!-- ============================================
 HERO - Con blobs de luz y textura sutil
 ============================================ -->
 <section class="relative bg-leather-900 text-white overflow-hidden">
-
     {# Blobs de luz cálida (decoración) #}
     <div class="absolute inset-0 overflow-hidden" aria-hidden="true">
         <div class="absolute -top-20 -left-20 w-72 h-72 sm:w-96 sm:h-96 bg-craft-600/20 rounded-full blur-3xl"></div>
@@ -15,7 +13,6 @@ HERO - Con blobs de luz y textura sutil
     </div>
 
     <div class="relative max-w-7xl mx-auto px-4 py-16 sm:py-24 lg:py-28 text-center">
-
         {# Badge superior #}
         <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-craft-500/40 bg-craft-600/10 backdrop-blur-sm mb-6 animate-fade-in-up">
             <span class="w-2 h-2 bg-craft-500 rounded-full animate-pulse"></span>
@@ -82,7 +79,6 @@ HERO - Con blobs de luz y textura sutil
     </div>
 </section>
 
-
 <!-- ============================================
 FRANJA DE BENEFICIOS
 ============================================ -->
@@ -128,12 +124,10 @@ FRANJA DE BENEFICIOS
     </div>
 </section>
 
-
 <!-- ============================================
 PRODUCTOS DESTACADOS - Mismo estilo que catálogo
 ============================================ -->
 <section class="max-w-7xl mx-auto px-3 sm:px-4 py-10 sm:py-14 lg:py-16">
-
     <div class="text-center mb-8 sm:mb-12">
         <span class="inline-block text-craft-600 text-xs sm:text-sm font-bold tracking-widest uppercase mb-2">
             Selección especial
@@ -156,56 +150,57 @@ PRODUCTOS DESTACADOS - Mismo estilo que catálogo
                style="aspect-ratio: 4 / 5;">
 
                 {% if product.image_url %}
-                    <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy"
-                         class="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-110
-                                {% if product.images %}group-hover:opacity-0{% endif %}">
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" loading="lazy"
+                     class="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-out group-hover:scale-110
+                            {% if product.images %}group-hover:opacity-0{% endif %}">
                 {% else %}
-                    <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-leather-50 to-leather-100 text-5xl sm:text-6xl">
-                        {% if product.category.slug == 'billeteras' %}👛
-                        {% elif product.category.slug == 'bolsos' %}👜
-                        {% elif product.category.slug == 'cinturones' %}🎗️
-                        {% else %}👜{% endif %}
-                    </div>
+                <div class="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-leather-50 to-leather-100 text-5xl sm:text-6xl">
+                    {% if product.category.slug == 'billeteras' %}👛
+                    {% elif product.category.slug == 'bolsos' %}👜
+                    {% elif product.category.slug == 'cinturones' %}🎗️
+                    {% else %}👜{% endif %}
+                </div>
                 {% endif %}
 
                 {% if product.images %}
-                    <img src="{{ product.images[0].url }}" alt="{{ product.name }}" loading="lazy"
-                         class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out">
+                <img src="{{ product.images[0].url }}" alt="{{ product.name }}" loading="lazy"
+                     class="absolute inset-0 w-full h-full object-cover opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-out">
                 {% endif %}
 
-                {# Overlay gradiente #}
+                {# Overlay gradiente: solo en desktop al hover #}
                 <div class="absolute inset-0 bg-gradient-to-t from-leather-900/60 via-leather-900/10 to-transparent pointer-events-none
-                            opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300"></div>
+                            opacity-0 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-300"></div>
 
                 {# Badge descuento #}
                 {% if product.compare_at_price %}
-                    <div class="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-                        <span class="inline-flex items-center bg-red-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full shadow-lg shadow-red-500/30">
-                            -{{ product.discount_percent }}%
-                        </span>
-                    </div>
+                <div class="absolute top-2.5 left-2.5 z-10 pointer-events-none">
+                    <span class="inline-flex items-center bg-red-500 text-white text-[10px] sm:text-xs font-bold px-2 py-1 rounded-full shadow-lg shadow-red-500/30">
+                        -{{ product.discount_percent }}%
+                    </span>
+                </div>
                 {% endif %}
 
-                {# Botón agregar #}
+                {# ===== Botón de acción rápida (solo desktop al hover) ===== #}
+                {# ✅ FIX: "hidden lg:block" elimina el cuadrado blanco sobre la imagen en móvil #}
                 <div class="absolute inset-x-0 bottom-0 z-10 p-2.5 sm:p-3
-                            translate-y-0 lg:translate-y-4 lg:opacity-0
+                            hidden lg:block lg:translate-y-4 lg:opacity-0
                             lg:group-hover:translate-y-0 lg:group-hover:opacity-100
                             transition-all duration-300"
                      onclick="event.preventDefault(); event.stopPropagation();">
                     {% if current_user.is_authenticated %}
                         {% if product.in_stock %}
-                            <button hx-post="/checkout/agregar/{{ product.id }}"
-                                    hx-target="#cart-count" hx-swap="outerHTML"
-                                    class="w-full flex items-center justify-center gap-2 bg-white/95 backdrop-blur-sm text-leather-900 font-semibold text-xs sm:text-sm py-2.5 rounded-xl shadow-lg hover:bg-craft-600 hover:text-white transition-all duration-300 active:scale-95">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                                </svg>
-                                Agregar al carrito
-                            </button>
+                        <button hx-post="/checkout/agregar/{{ product.id }}"
+                                hx-target="#cart-count" hx-swap="outerHTML"
+                                class="w-full flex items-center justify-center gap-2 bg-white/95 backdrop-blur-sm text-leather-900 font-semibold text-xs sm:text-sm py-2.5 rounded-xl shadow-lg hover:bg-craft-600 hover:text-white transition-all duration-300 active:scale-95">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                            Agregar al carrito
+                        </button>
                         {% else %}
-                            <span class="block w-full text-center bg-gray-100/95 backdrop-blur-sm text-gray-500 font-semibold text-xs sm:text-sm py-2.5 rounded-xl cursor-not-allowed">
-                                Sin stock
-                            </span>
+                        <span class="block w-full text-center bg-gray-100/95 backdrop-blur-sm text-gray-500 font-semibold text-xs sm:text-sm py-2.5 rounded-xl cursor-not-allowed">
+                            Sin stock
+                        </span>
                         {% endif %}
                     {% else %}
                         <a href="/auth/login"
@@ -227,7 +222,7 @@ PRODUCTOS DESTACADOS - Mismo estilo que catálogo
                 <div class="flex items-baseline gap-2 flex-wrap">
                     <span class="text-base sm:text-lg font-bold text-leather-900">${{ "%.2f"|format(product.price) }}</span>
                     {% if product.compare_at_price %}
-                        <span class="text-xs sm:text-sm text-gray-400 line-through">${{ "%.2f"|format(product.compare_at_price) }}</span>
+                    <span class="text-xs sm:text-sm text-gray-400 line-through">${{ "%.2f"|format(product.compare_at_price) }}</span>
                     {% endif %}
                 </div>
             </div>
@@ -235,10 +230,10 @@ PRODUCTOS DESTACADOS - Mismo estilo que catálogo
         {% endfor %}
     </div>
     {% else %}
-        <div class="text-center py-16">
-            <p class="text-5xl mb-4">👜</p>
-            <p class="text-leather-700">No hay productos destacados aún. Ejecuta <code class="bg-leather-100 px-2 py-1 rounded">flask seed</code>.</p>
-        </div>
+    <div class="text-center py-16">
+        <p class="text-5xl mb-4">👜</p>
+        <p class="text-leather-700">No hay productos destacados aún. Ejecuta <code class="bg-leather-100 px-2 py-1 rounded">flask seed</code>.</p>
+    </div>
     {% endif %}
 
     {# CTA ver todos #}
