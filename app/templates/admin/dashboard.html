@@ -1,3 +1,4 @@
+<!-- app/templates/admin/dashboard.html -->
 {% extends "layouts/admin.html" %}
 {% block title %}Panel Admin | Marroquinería Artesanal{% endblock %}
 
@@ -34,29 +35,34 @@
 
 <!-- Accesos rápidos -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-    <a href="/admin/productos" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+    <a href="/admin/usuarios" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition group">
+        <p class="text-2xl mb-2">👥</p>
+        <h3 class="font-display text-xl font-bold text-leather-900 mb-1 group-hover:text-craft-600 transition">Usuarios</h3>
+        <p class="text-sm text-leather-700">Gestionar cuentas, roles y accesos</p>
+    </a>
+    <a href="/admin/productos" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition group">
         <p class="text-2xl mb-2">📦</p>
-        <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Productos</h3>
+        <h3 class="font-display text-xl font-bold text-leather-900 mb-1 group-hover:text-craft-600 transition">Productos</h3>
         <p class="text-sm text-leather-700">Gestionar catálogo</p>
     </a>
-    <a href="/admin/categorias" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+    <a href="/admin/categorias" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition group">
         <p class="text-2xl mb-2">🏷️</p>
-        <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Categorías</h3>
+        <h3 class="font-display text-xl font-bold text-leather-900 mb-1 group-hover:text-craft-600 transition">Categorías</h3>
         <p class="text-sm text-leather-700">Organizar productos</p>
     </a>
-    <a href="/admin/pedidos" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+    <a href="/admin/pedidos" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition group">
         <p class="text-2xl mb-2">🧾</p>
-        <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Pedidos</h3>
+        <h3 class="font-display text-xl font-bold text-leather-900 mb-1 group-hover:text-craft-600 transition">Pedidos</h3>
         <p class="text-sm text-leather-700">Ver y gestionar</p>
     </a>
-    <a href="/admin/estadisticas" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+    <a href="/admin/estadisticas" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition group">
         <p class="text-2xl mb-2">📊</p>
-        <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Estadísticas</h3>
+        <h3 class="font-display text-xl font-bold text-leather-900 mb-1 group-hover:text-craft-600 transition">Estadísticas</h3>
         <p class="text-sm text-leather-700">Gráficos y métricas de ventas</p>
     </a>
-    <a href="/admin/reseñas" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition">
+    <a href="/admin/reseñas" class="bg-white rounded-xl shadow-sm p-6 hover:shadow-lg transition group">
         <p class="text-2xl mb-2">⭐</p>
-        <h3 class="font-display text-xl font-bold text-leather-900 mb-1">Reseñas</h3>
+        <h3 class="font-display text-xl font-bold text-leather-900 mb-1 group-hover:text-craft-600 transition">Reseñas</h3>
         <p class="text-sm text-leather-700">Moderar reseñas de clientes</p>
     </a>
 </div>
@@ -83,13 +89,13 @@
                     <td class="py-3 px-4 text-sm font-semibold">${{ "%.2f"|format(order.total) }}</td>
                     <td class="py-3 px-4 text-sm">
                         <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold
-                        {% if order.status_color == 'yellow' %}bg-yellow-100 text-yellow-800
-                        {% elif order.status_color == 'blue' %}bg-blue-100 text-blue-800
-                        {% elif order.status_color == 'purple' %}bg-purple-100 text-purple-800
-                        {% elif order.status_color == 'indigo' %}bg-indigo-100 text-indigo-800
-                        {% elif order.status_color == 'green' %}bg-green-100 text-green-800
-                        {% elif order.status_color == 'red' %}bg-red-100 text-red-800
-                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                               {% if order.status_color == 'yellow' %}bg-yellow-100 text-yellow-800
+                               {% elif order.status_color == 'blue' %}bg-blue-100 text-blue-800
+                               {% elif order.status_color == 'purple' %}bg-purple-100 text-purple-800
+                               {% elif order.status_color == 'indigo' %}bg-indigo-100 text-indigo-800
+                               {% elif order.status_color == 'green' %}bg-green-100 text-green-800
+                               {% elif order.status_color == 'red' %}bg-red-100 text-red-800
+                               {% else %}bg-gray-100 text-gray-800{% endif %}">
                             {{ order.status_icon }} {{ order.status_display }}
                         </span>
                     </td>

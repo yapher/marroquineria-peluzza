@@ -1,0 +1,236 @@
+<!-- app/templates/admin/user_detail.html -->
+{% extends "layouts/admin.html" %}
+{% block title %}{{ user.full_name }} | Panel Admin{% endblock %}
+
+{% block admin_content %}
+<!-- Volver -->
+<div class="mb-6">
+    <a href="/admin/usuarios" class="text-craft-600 hover:underline text-sm">← Volver a usuarios</a>
+</div>
+
+<!-- Header del usuario -->
+<div class="bg-white rounded-2xl shadow-sm p-6 sm:p-8 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-6">
+        <!-- Avatar grande -->
+        <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden flex-shrink-0 border-4 border-white shadow-lg mx-auto sm:mx-0">
+            {% if user.has_avatar %}
+                <img src="{{ user.oauth_profile_pic }}"
+                     alt="{{ user.full_name }}"
+                     class="w-full h-full object-cover"
+                     referrerpolicy="no-referrer">
+            {% else %}
+                <div class="w-full h-full bg-gradient-to-br from-craft-600 to-craft-500 flex items-center justify-center text-white text-3xl sm:text-4xl font-bold">
+                    {{ user.avatar_initials }}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Info -->
+        <div class="flex-1 text-center sm:text-left">
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-2">
+                <h1 class="font-display text-2xl sm:text-3xl font-bold text-leather-900">
+                    {{ user.full_name }}
+                </h1>
+                {% if user.is_admin %}
+                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded-full text-xs font-semibold">
+                        ⚙️ Admin
+                    </span>
+                {% endif %}
+                {% if user.is_blocked %}
+                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-semibold">
+                        🚫 Bloqueado
+                    </span>
+                {% else %}
+                    <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-semibold">
+                        ✅ Activo
+                    </span>
+                {% endif %}
+            </div>
+            <p class="text-sm text-leather-700 mb-1">
+                <a href="mailto:{{ user.email }}" class="hover:text-craft-600 transition">
+                    {{ user.email }}
+                </a>
+            </p>
+            <p class="text-xs text-gray-500">
+                Registrado el {{ user.created_at.strftime('%d de %B de %Y a las %H:%M') }}
+            </p>
+
+            <!-- Cuentas sociales vinculadas -->
+            {% if user.social_accounts %}
+                <div class="flex flex-wrap items-center gap-2 mt-3">
+                    <span class="text-xs text-gray-500">Login social:</span>
+                    {% for sa in user.social_accounts %}
+                        <span class="inline-flex items-center gap-1 px-2 py-1 bg-leather-50 text-leather-700 rounded text-xs font-medium">
+                            {% if sa.provider == 'google' %}
+                                <span class="text-sm">🔵</span> Google
+                            {% elif sa.provider == 'facebook' %}
+                                <span class="text-sm">🔷</span> Facebook
+                            {% else %}
+                                <span class="text-sm">🔗</span> {{ sa.provider|capitalize }}
+                            {% endif %}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Acciones rápidas (solo si no es el propio admin) -->
+    {% if user.id != current_user.id %}
+        <div class="flex flex-wrap gap-3 mt-6 pt-6 border-t border-gray-100">
+            <form method="POST"
+                  action="/admin/usuarios/{{ user.id }}/toggle-block"
+                  data-confirm="{% if user.is_blocked %}¿Desbloquear a {{ user.full_name }}?{% else %}¿Bloquear a {{ user.full_name }}?{% endif %}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition
+                               {% if user.is_blocked %}
+                               bg-green-600 text-white hover:bg-green-700
+                               {% else %}
+                               bg-red-600 text-white hover:bg-red-700
+                               {% endif %}">
+                    {% if user.is_blocked %}
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                        </svg>
+                        Desbloquear usuario
+                    {% else %}
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                        </svg>
+                        Bloquear usuario
+                    {% endif %}
+                </button>
+            </form>
+
+            <form method="POST"
+                  action="/admin/usuarios/{{ user.id }}/toggle-admin"
+                  data-confirm="{% if user.is_admin %}¿Quitar el rol de administrador?{% else %}¿Dar rol de administrador?{% endif %}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <button type="submit"
+                        class="inline-flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition
+                               {% if user.is_admin %}
+                               bg-gray-200 text-leather-900 hover:bg-gray-300
+                               {% else %}
+                               bg-purple-600 text-white hover:bg-purple-700
+                               {% endif %}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                    </svg>
+                    {% if user.is_admin %}Quitar rol admin{% else %}Dar rol admin{% endif %}
+                </button>
+            </form>
+        </div>
+    {% else %}
+        <div class="mt-6 pt-6 border-t border-gray-100">
+            <p class="text-sm text-gray-500 italic">⚠️ Este es tu propio usuario. No podés modificarte a vos mismo.</p>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Grid de información -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Sistema de fidelización -->
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="font-display text-xl font-bold text-leather-900 mb-4 flex items-center gap-2">
+            <span class="text-2xl">🎁</span> Fidelización
+        </h2>
+        <div class="space-y-3">
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Nivel actual</span>
+                <span class="font-semibold text-leather-900">{{ user.loyalty_level_display }}</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Puntos acumulados</span>
+                <span class="font-semibold text-leather-900">{{ user.loyalty_points }}</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Descuento activo</span>
+                <span class="font-semibold text-leather-900">{{ user.loyalty_discount }}%</span>
+            </div>
+            <div class="flex justify-between items-center py-2">
+                <span class="text-sm text-gray-600">Total gastado</span>
+                <span class="font-semibold text-craft-600">${{ "%.2f"|format(user.total_spent or 0) }}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actividad -->
+    <div class="bg-white rounded-2xl shadow-sm p-6">
+        <h2 class="font-display text-xl font-bold text-leather-900 mb-4 flex items-center gap-2">
+            <span class="text-2xl">📊</span> Actividad
+        </h2>
+        <div class="space-y-3">
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Pedidos realizados</span>
+                <span class="font-semibold text-leather-900">{{ user.orders|length }}</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Favoritos guardados</span>
+                <span class="font-semibold text-leather-900">{{ user.wishlist_count }}</span>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-sm text-gray-600">Reseñas publicadas</span>
+                <span class="font-semibold text-leather-900">{{ user.reviews|selectattr('approved')|list|length }}</span>
+            </div>
+            <div class="flex justify-between items-center py-2">
+                <span class="text-sm text-gray-600">Transacciones de puntos</span>
+                <span class="font-semibold text-leather-900">{{ user.loyalty_transactions|length }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pedidos recientes -->
+{% if user.orders %}
+    <div class="bg-white rounded-2xl shadow-sm p-6 mt-6">
+        <h2 class="font-display text-xl font-bold text-leather-900 mb-4 flex items-center gap-2">
+            <span class="text-2xl">📦</span> Últimos pedidos
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="w-full min-w-[500px]">
+                <thead class="border-b border-gray-200">
+                    <tr>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Pedido</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Fecha</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Total</th>
+                        <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in user.orders[:5] %}
+                    <tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-3 px-3">
+                            <a href="/admin/pedidos/{{ order.id }}" class="font-semibold text-craft-600 hover:underline">
+                                #{{ order.id }}
+                            </a>
+                        </td>
+                        <td class="py-3 px-3 text-sm text-gray-600">
+                            {{ order.created_at.strftime('%d/%m/%Y') }}
+                        </td>
+                        <td class="py-3 px-3 text-sm font-semibold text-leather-900">
+                            ${{ "%.2f"|format(order.total) }}
+                        </td>
+                        <td class="py-3 px-3">
+                            <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs font-semibold
+                                   {% if order.status_color == 'yellow' %}bg-yellow-100 text-yellow-800
+                                   {% elif order.status_color == 'blue' %}bg-blue-100 text-blue-800
+                                   {% elif order.status_color == 'purple' %}bg-purple-100 text-purple-800
+                                   {% elif order.status_color == 'indigo' %}bg-indigo-100 text-indigo-800
+                                   {% elif order.status_color == 'green' %}bg-green-100 text-green-800
+                                   {% elif order.status_color == 'red' %}bg-red-100 text-red-800
+                                   {% else %}bg-gray-100 text-gray-800{% endif %}">
+                                {{ order.status_icon }} {{ order.status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

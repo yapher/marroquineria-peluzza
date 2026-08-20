@@ -1,0 +1,240 @@
+<!-- app/templates/admin/users.html -->
+{% extends "layouts/admin.html" %}
+{% block title %}Usuarios | Panel Admin{% endblock %}
+
+{% block admin_content %}
+<!-- ✅ VOLVER AL PANEL -->
+<div class="mb-4">
+    <a href="/admin" class="text-craft-600 hover:underline text-sm">← Volver al Panel</a>
+</div>
+
+<!-- Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+        <h1 class="font-display text-3xl sm:text-4xl font-bold text-leather-900">Usuarios</h1>
+        <p class="text-leather-700 mt-1 text-sm sm:text-base">
+            Gestioná cuentas, roles y accesos de la plataforma
+        </p>
+    </div>
+</div>
+
+<!-- Estadísticas rápidas -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+    <a href="/admin/usuarios"
+       class="bg-white rounded-xl p-4 text-center hover:shadow-md transition border-l-4 border-leather-900 {% if current_filter == 'all' %}ring-2 ring-leather-900{% endif %}">
+        <p class="text-2xl sm:text-3xl font-bold text-leather-900">{{ stats.total }}</p>
+        <p class="text-xs sm:text-sm text-leather-700">Total</p>
+    </a>
+    <a href="/admin/usuarios?filter=active"
+       class="bg-white rounded-xl p-4 text-center hover:shadow-md transition border-l-4 border-green-500 {% if current_filter == 'active' %}ring-2 ring-green-500{% endif %}">
+        <p class="text-2xl sm:text-3xl font-bold text-green-600">{{ stats.active }}</p>
+        <p class="text-xs sm:text-sm text-leather-700">👥 Activos</p>
+    </a>
+    <a href="/admin/usuarios?filter=admins"
+       class="bg-white rounded-xl p-4 text-center hover:shadow-md transition border-l-4 border-purple-500 {% if current_filter == 'admins' %}ring-2 ring-purple-500{% endif %}">
+        <p class="text-2xl sm:text-3xl font-bold text-purple-600">{{ stats.admins }}</p>
+        <p class="text-xs sm:text-sm text-leather-700">⚙️ Admins</p>
+    </a>
+    <a href="/admin/usuarios?filter=blocked"
+       class="bg-white rounded-xl p-4 text-center hover:shadow-md transition border-l-4 border-red-500 {% if current_filter == 'blocked' %}ring-2 ring-red-500{% endif %}">
+        <p class="text-2xl sm:text-3xl font-bold text-red-600">{{ stats.blocked }}</p>
+        <p class="text-xs sm:text-sm text-leather-700">🚫 Bloqueados</p>
+    </a>
+</div>
+
+<!-- Búsqueda -->
+<form method="GET" action="/admin/usuarios" class="mb-6">
+    {% if current_filter and current_filter != 'all' %}
+    <input type="hidden" name="filter" value="{{ current_filter }}">
+    {% endif %}
+    <div class="relative">
+        <input type="search" name="q" value="{{ search }}"
+               placeholder="Buscar por nombre, apellido o email..."
+               class="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-craft-600 focus:border-craft-600 focus:outline-none shadow-sm">
+        <svg class="w-5 h-5 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+    </div>
+</form>
+
+<!-- Tabla de usuarios -->
+<div class="bg-white rounded-xl shadow-sm overflow-hidden">
+    <div class="admin-table-wrapper overflow-x-auto">
+        <table class="w-full min-w-[700px]">
+            <thead class="bg-gray-50 border-b border-gray-200">
+                <tr>
+                    <th class="text-left py-3 px-4 text-xs font-semibold text-leather-900 uppercase tracking-wide">Usuario</th>
+                    <th class="text-left py-3 px-4 text-xs font-semibold text-leather-900 uppercase tracking-wide hidden md:table-cell">Email</th>
+                    <th class="text-center py-3 px-4 text-xs font-semibold text-leather-900 uppercase tracking-wide">Rol</th>
+                    <th class="text-center py-3 px-4 text-xs font-semibold text-leather-900 uppercase tracking-wide">Estado</th>
+                    <th class="text-left py-3 px-4 text-xs font-semibold text-leather-900 uppercase tracking-wide hidden lg:table-cell">Registro</th>
+                    <th class="text-right py-3 px-4 text-xs font-semibold text-leather-900 uppercase tracking-wide">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr class="border-b border-gray-100 hover:bg-gray-50 transition">
+                    <!-- Usuario (avatar + nombre) -->
+                    <td class="py-3 px-4">
+                        <a href="/admin/usuarios/{{ u.id }}" class="flex items-center gap-3 group">
+                            <!-- Avatar -->
+                            <div class="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-gray-200">
+                                {% if u.has_avatar %}
+                                    <img src="{{ u.oauth_profile_pic }}"
+                                         alt="{{ u.full_name }}"
+                                         class="w-full h-full object-cover"
+                                         referrerpolicy="no-referrer">
+                                {% else %}
+                                    <div class="w-full h-full bg-gradient-to-br from-craft-600 to-craft-500 flex items-center justify-center text-white text-sm font-bold">
+                                        {{ u.avatar_initials }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <!-- Nombre -->
+                            <div class="min-w-0">
+                                <p class="font-semibold text-leather-900 text-sm truncate group-hover:text-craft-600 transition">
+                                    {{ u.full_name }}
+                                </p>
+                                <p class="text-xs text-gray-500 md:hidden truncate">{{ u.email }}</p>
+                            </div>
+                        </a>
+                    </td>
+
+                    <!-- Email (solo desktop) -->
+                    <td class="py-3 px-4 text-sm text-leather-700 hidden md:table-cell">
+                        <a href="mailto:{{ u.email }}" class="hover:text-craft-600 transition truncate block max-w-[220px]">
+                            {{ u.email }}
+                        </a>
+                    </td>
+
+                    <!-- Rol -->
+                    <td class="py-3 px-4 text-center">
+                        {% if u.is_admin %}
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-semibold">
+                                ⚙️ Admin
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-semibold">
+                                👤 Cliente
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Estado -->
+                    <td class="py-3 px-4 text-center">
+                        {% if u.is_blocked %}
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-semibold">
+                                🚫 Bloqueado
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-semibold">
+                                ✅ Activo
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Fecha de registro (solo desktop grande) -->
+                    <td class="py-3 px-4 text-sm text-gray-500 hidden lg:table-cell">
+                        {{ u.created_at.strftime('%d/%m/%Y') }}
+                    </td>
+
+                    <!-- Acciones -->
+                    <td class="py-3 px-4 text-right">
+                        <div class="flex items-center justify-end gap-2">
+                            <!-- Ver detalle -->
+                            <a href="/admin/usuarios/{{ u.id }}"
+                               class="p-2 text-leather-700 hover:text-craft-600 hover:bg-leather-50 rounded-lg transition"
+                               title="Ver detalle">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                </svg>
+                            </a>
+
+                            <!-- Toggle admin (no mostrar si es el propio admin logueado) -->
+                            {% if u.id != current_user.id %}
+                                <form method="POST"
+                                      action="/admin/usuarios/{{ u.id }}/toggle-admin"
+                                      class="inline"
+                                      data-confirm="{% if u.is_admin %}¿Quitar el rol de administrador a {{ u.full_name }}?{% else %}¿Dar rol de administrador a {{ u.full_name }}?{% endif %}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit"
+                                            class="p-2 rounded-lg transition
+                                                   {% if u.is_admin %}
+                                                   text-purple-600 hover:text-purple-800 hover:bg-purple-50
+                                                   {% else %}
+                                                   text-gray-500 hover:text-purple-600 hover:bg-purple-50
+                                                   {% endif %}"
+                                            title="{% if u.is_admin %}Quitar rol admin{% else %}Dar rol admin{% endif %}">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                                        </svg>
+                                    </button>
+                                </form>
+
+                                <!-- Toggle block -->
+                                <form method="POST"
+                                      action="/admin/usuarios/{{ u.id }}/toggle-block"
+                                      class="inline"
+                                      data-confirm="{% if u.is_blocked %}¿Desbloquear a {{ u.full_name }}?{% else %}¿Bloquear a {{ u.full_name }}? No podrá iniciar sesión.{% endif %}">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit"
+                                            class="p-2 rounded-lg transition
+                                                   {% if u.is_blocked %}
+                                                   text-green-600 hover:text-green-800 hover:bg-green-50
+                                                   {% else %}
+                                                   text-red-600 hover:text-red-800 hover:bg-red-50
+                                                   {% endif %}"
+                                            title="{% if u.is_blocked %}Desbloquear{% else %}Bloquear{% endif %}">
+                                        {% if u.is_blocked %}
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                      d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z"/>
+                                            </svg>
+                                        {% else %}
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                      d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                                            </svg>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="text-xs text-gray-400 italic px-2">Vos</span>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="py-12 text-center text-gray-500">
+                        {% if search %}
+                            <p class="text-4xl mb-2">🔍</p>
+                            <p>No se encontraron usuarios para "{{ search }}"</p>
+                            <a href="/admin/usuarios" class="text-craft-600 underline text-sm mt-2 inline-block">Limpiar búsqueda</a>
+                        {% else %}
+                            <p class="text-4xl mb-2">👥</p>
+                            <p>No hay usuarios registrados aún</p>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Resumen -->
+<p class="text-xs text-gray-500 mt-4 text-center">
+    Mostrando {{ users|length }} usuario{{ 's' if users|length != 1 }}
+    {% if search %} para "{{ search }}"{% endif %}
+    {% if current_filter and current_filter != 'all' %}
+        · filtro: <strong>{{ current_filter }}</strong>
+    {% endif %}
+</p>
+{% endblock %}

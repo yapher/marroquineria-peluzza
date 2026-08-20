@@ -1,4 +1,5 @@
 # app/models/user.py
+# app/models/user.py
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from flask_login import UserMixin
@@ -14,15 +15,17 @@ from ..config.constants import (
 )
 from ..utils.time import utc_now
 
+
 class User(UserMixin, db.Model):
     __tablename__ = "users"
-
     id: Mapped[int] = mapped_column(primary_key=True)
     first_name: Mapped[str] = mapped_column(String(80), nullable=False)
     last_name: Mapped[str] = mapped_column(String(80), nullable=False)
     email: Mapped[str] = mapped_column(String(120), unique=True, nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(256), nullable=False)
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    # ✅ NUEVO: usuario bloqueado por el admin (no puede hacer login)
+    is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utc_now)
 
     # Sistema de fidelización
@@ -30,31 +33,26 @@ class User(UserMixin, db.Model):
     loyalty_level: Mapped[str] = mapped_column(String(20), default=LoyaltyLevel.BRONZE)
     total_spent: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
 
-    # ✅ NUEVO: URL de la foto de perfil del proveedor OAuth
+    # URL de la foto de perfil del proveedor OAuth
     oauth_profile_pic: Mapped[str | None] = mapped_column(String(500), nullable=True)
 
     # ==========================================
     # RELACIONES
     # ==========================================
     orders: Mapped[list["Order"]] = relationship(back_populates="user")
-
     wishlist_items: Mapped[list["Wishlist"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan"
     )
-
     reviews: Mapped[list["Review"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan"
     )
-
     loyalty_transactions: Mapped[list["LoyaltyTransaction"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         order_by="desc(LoyaltyTransaction.created_at)"
     )
-
-    # ✅ Login social: cuentas OAuth vinculadas (Google, Facebook, ...)
     social_accounts: Mapped[list["SocialAccount"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan"
@@ -67,6 +65,19 @@ class User(UserMixin, db.Model):
     def full_name(self) -> str:
         """Devuelve el nombre completo del usuario."""
         return f"{self.first_name} {self.last_name}"
+
+    @property
+    def avatar_initials(self) -> str:
+        """Iniciales del usuario para el avatar fallback (ej: 'JP')."""
+        try:
+            return f"{self.first_name[0]}{self.last_name[0]}".upper()
+        except (IndexError, TypeError):
+            return "?"
+
+    @property
+    def has_avatar(self) -> bool:
+        """True si el usuario tiene foto de perfil (OAuth)."""
+        return bool(self.oauth_profile_pic)
 
     def set_password(self, password: str):
         """Hashea y guarda la contraseña."""
@@ -146,12 +157,10 @@ class User(UserMixin, db.Model):
         next_level = self.next_level
         if next_level["points"] is None:
             return 100.0
-
         current_threshold = LOYALTY_LEVELS.get(self.loyalty_level, {}).get("threshold", 0)
         range_size = next_level["points"] - current_threshold
         if range_size == 0:
             return 100.0
-
         progress = ((self.loyalty_points - current_threshold) / range_size) * 100
         return min(100.0, max(0.0, progress))
 
@@ -180,5 +189,4 @@ class User(UserMixin, db.Model):
             balance_after=self.loyalty_points
         )
         db.session.add(transaction)
-
         return old_level != self.loyalty_level
